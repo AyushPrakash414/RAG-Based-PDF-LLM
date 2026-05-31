@@ -80,7 +80,7 @@ async def ask_question(
         ) from exc
 
 
-@router.post(
+@router.get(
     "/health",
     response_model=HealthResponse,
     summary="Health check",
