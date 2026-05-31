@@ -9,9 +9,9 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 model_name = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 
-if not api_key or api_key == "AIzaSyCCkCRv45hD-YNW5gp5p16gGgv1360aXo8":
-    print("❌ GEMINI_API_KEY is not set correctly in the .env file.")
-    exit(1)
+# if not :
+#     print("❌ GEMINI_API_KEY is not set correctly in the .env file.")
+#     exit(1)
 
 print(f"Testing connection to Gemini using model: {model_name}...")
 
