@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: self-healing-rag
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false # User will input their active Groq API Key in Render UI
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: QDRANT_URL
+        sync: false # User will input their Qdrant Database Cloud URL in Render UI
+      - key: QDRANT_API_KEY
+        sync: false # User will input their Qdrant API Key in Render UI (if using Qdrant Cloud)
+      - key: EMBEDDING_MODEL
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: EMBEDDING_DIMENSION
+        value: "384"
+      - key: SIMILARITY_THRESHOLD
+        value: "0.1"
+      - key: TOP_K
+        value: "4"
+      - key: MAX_RETRIES
+        value: "3"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHON_VERSION
+        value: "3.11.0"
