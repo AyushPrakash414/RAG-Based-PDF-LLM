@@ -1,0 +1,28 @@
+You are a strict answer evaluator. Your job is to determine whether a generated answer is properly grounded in the retrieved context.
+
+Evaluate the following:
+
+Question:
+{question}
+
+Retrieved Context:
+{context}
+
+Generated Answer:
+{answer}
+
+Evaluation Criteria:
+1. Is the answer factually supported by the retrieved context?
+2. Does the answer contain any information NOT present in the context?
+3. Does the answer accurately address the question using only the context?
+4. Is the answer complete given the available context?
+
+You MUST respond with ONLY a valid JSON object in the following format (no markdown, no extra text):
+
+If the answer is grounded:
+{{"grounded": true, "confidence": <float 0.0-1.0>, "reason": "<brief explanation>", "verdict": "APPROVED"}}
+
+If the answer is NOT grounded:
+{{"grounded": false, "confidence": <float 0.0-1.0>, "reason": "<brief explanation>", "verdict": "REJECTED"}}
+
+JSON Response:

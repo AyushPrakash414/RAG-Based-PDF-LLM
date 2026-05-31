@@ -1,1 +1,53 @@
-db
+# ============================================================
+# Self-Healing RAG Service - Git Ignore
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Environment & Configuration ---
+.env
+.env.local
+.env.*
+!.env.example
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# --- OS-specific ---
+.DS_Store
+Thumbs.db
+
+# --- Log Files ---
+*.log
+logs/
+
+# --- Database & Storage ---
+db/
+chroma_db/
+
+# --- Execution Traces (Sensitive Content) ---
+traces/
+
+# --- Local Scripts & Scratchpads ---
+scratch/

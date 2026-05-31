@@ -1,0 +1,27 @@
+# ============================================================
+# Self-Healing RAG Service - Python Dependencies
+# ============================================================
+
+# --- Web Framework ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+
+# --- Data Validation ---
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+
+# --- LLM ---
+groq>=0.9.0
+
+# --- Vector Database ---
+qdrant-client>=1.12.0
+
+# --- Embeddings ---
+sentence-transformers>=3.3.0
+
+# --- Document Processing ---
+langchain-community>=0.3.0
+langchain-text-splitters>=0.3.0
+
+# --- Environment ---
+python-dotenv>=1.0.0

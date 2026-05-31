@@ -1,154 +1,190 @@
-# RAG-Based-PDF-LLM
+# Self-Healing RAG Microservice
 
-A simple Retrieval-Augmented Generation (RAG) project built with:
+A production-ready, **Self-Healing Retrieval-Augmented Generation (RAG)** microservice built with Python, FastAPI, Groq, and Qdrant.
 
-- LangChain
-- ChromaDB
-- Hugging Face embeddings
-- Gemini for final answer generation
+## Architecture Overview
 
-This project reads local `.txt` files, splits them into chunks, stores embeddings in Chroma, and answers questions using retrieved context.
+```
+User Question
+     │
+     ▼
+┌─────────────┐
+│  FastAPI     │  POST /ask
+│  API Layer   │
+└──────┬──────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────┐
+│                  Orchestrator Service                     │
+│                                                          │
+│  Attempt 1: Retrieve(k=4)  → Validate → Generate → Critic│
+│  Attempt 2: Rewrite → Retrieve(k=8)  → Validate → ...   │
+│  Attempt 3: Rewrite → Retrieve(k=12) → Validate → ...   │
+│  Fallback:  "Insufficient information"                   │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+       │                    │                    │
+       ▼                    ▼                    ▼
+┌─────────────┐   ┌──────────────┐   ┌─────────────────┐
+│  Qdrant     │   │  Groq LLM    │   │  Trace Storage  │
+│  Vector DB  │   │  Provider    │   │  (JSON files)   │
+└─────────────┘   └──────────────┘   └─────────────────┘
+```
+
+## Key Features
+
+- **Self-Healing Pipeline**: 3-stage retry with escalating retrieval strategies
+- **Retrieval Validation**: Validates chunk relevance before generation
+- **Answer Grounding**: Critic evaluates if answers are grounded in context
+- **Query Rewriting**: Automatically rewrites queries for better retrieval
+- **Full Tracing**: Every request produces a detailed JSON trace
+- **LLM Abstraction**: Swap Groq for OpenAI/Claude without changing services
+- **Vector Store Abstraction**: Swap Qdrant for Pinecone/Weaviate/ChromaDB
+- **Async Support**: Built for concurrent users with async/await
+- **Source Citations**: Every answer includes source documents
 
 ## Project Structure
 
-```text
-Rag-practice/
-├── db/
-│   └── chroma_db/            # persisted vector database
-├── docunment/                # source text files
-├── ingestion-pipeline.py     # loads docs, chunks text, creates embeddings
-├── retrivalpipeline.py       # retrieves relevant chunks and asks Gemini
-├── .gitignore
+```
+├── app/
+│   ├── api/
+│   │   └── routes.py              # FastAPI endpoints
+│   ├── services/
+│   │   ├── retrieval_service.py   # Vector store search
+│   │   ├── retrieval_validator.py # Chunk relevance validation
+│   │   ├── answer_generator.py    # LLM answer generation
+│   │   ├── answer_critic.py       # Answer grounding evaluation
+│   │   ├── query_rewriter.py      # Query optimization
+│   │   └── orchestrator_service.py# Self-healing orchestration
+│   ├── interfaces/
+│   │   ├── llm_provider.py        # Abstract LLM interface
+│   │   └── vector_store.py        # Abstract vector store interface
+│   ├── providers/
+│   │   ├── groq_provider.py       # Groq implementation
+│   │   └── qdrant_vector_store.py # Qdrant implementation
+│   ├── prompts/                   # Prompt templates (TXT)
+│   ├── models/                    # Pydantic models
+│   ├── config/
+│   │   └── settings.py            # Environment configuration
+│   ├── utils/
+│   │   └── logger.py              # Structured logging
+│   └── main.py                    # FastAPI app entry point
+├── scripts/
+│   └── ingest_documents.py        # Document ingestion script
+├── documents/                     # Source TXT documents
+├── traces/                        # Execution trace JSON files
+├── tests/
+├── requirements.txt
+├── .env
 └── README.md
 ```
 
-Note: the folder and file names currently use `docunment` and `retrivalpipeline.py`. The README keeps those names to match your existing code.
+## Quick Start
 
-## How It Works
+### Prerequisites
 
-1. `ingestion-pipeline.py` loads `.txt` files from `docunment/`
-2. The text is split into smaller chunks with overlap
-3. Each chunk is converted into embeddings using `all-MiniLM-L6-v2`
-4. Embeddings are stored in ChromaDB under `db/chroma_db`
-5. `retrivalpipeline.py` retrieves the most relevant chunks for a question
-6. Gemini uses that retrieved context to generate the final answer
+- Python 3.11+
+- Docker (for Qdrant) or Qdrant Cloud account
+- Groq API key
 
-## Requirements
+### 1. Install Dependencies
 
-- Python 3.10+
-- A virtual environment
-- `GOOGLE_API_KEY` in `.env`
-- Internet access the first time the Hugging Face model is downloaded
+```bash
+pip install -r requirements.txt
+```
 
-## Environment Variables
+### 2. Start Qdrant (Local Docker)
 
-Create a `.env` file in the project root:
+```bash
+docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
+```
+
+### 3. Configure Environment
+
+Edit `.env` with your credentials:
 
 ```env
-GOOGLE_API_KEY=your_gemini_api_key
-HUGGINGFACEHUB_API_TOKEN=your_huggingface_token
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.3-70b-versatile
+QDRANT_URL=http://localhost:6333
 ```
 
-`HUGGINGFACEHUB_API_TOKEN` is optional but recommended because it helps avoid rate limits when downloading the embedding model.
+### 4. Ingest Documents
 
-## Install Dependencies
+Place your `.txt` files in the `documents/` directory, then run:
 
-From the repository root:
-
-```powershell
-.\venv\Scripts\activate
-pip install -r requirements.txt
+```bash
+python scripts/ingest_documents.py
 ```
 
-If you are not using the existing `venv`, create one first:
+### 5. Start the Server
 
-```powershell
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Step 1: Build the Vector Database
+### 6. Test the API
 
-Run the ingestion pipeline:
+```bash
+# Ask a question
+curl -X POST http://localhost:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Does the text prove that Rama historically existed?"}'
 
-```powershell
-.\venv\Scripts\python Rag-practice\ingestion-pipeline.py
+# Health check
+curl -X POST http://localhost:8000/health
 ```
 
-What this does:
+## API Endpoints
 
-- loads `.txt` files from `Rag-practice/docunment/`
-- splits them into chunks with `RecursiveCharacterTextSplitter`
-- creates embeddings with `HuggingFaceEmbeddings`
-- stores the vectors in `Rag-practice/db/chroma_db`
+### POST /ask
 
-## Step 2: Ask Questions
-
-Run the retrieval pipeline:
-
-```powershell
-.\venv\Scripts\python Rag-practice\retrivalpipeline.py
+**Request:**
+```json
+{
+  "question": "Does the text prove that Rama historically existed?"
+}
 ```
 
-Run it with a custom question:
-
-```powershell
-.\venv\Scripts\python Rag-practice\retrivalpipeline.py "What does the document say about Rama?"
+**Response:**
+```json
+{
+  "answer": "Based on the provided context...",
+  "sources": ["ram.txt"],
+  "confidence": 0.91,
+  "retrieval_confidence": 0.88,
+  "attempts": 1,
+  "status": "APPROVED"
+}
 ```
 
-## Example Flow
+### POST /health
 
-1. Put one or more `.txt` files inside `Rag-practice/docunment/`
-2. Run `ingestion-pipeline.py`
-3. Run `retrivalpipeline.py`
-4. Ask questions based only on those documents
-
-## Current Tech Choices
-
-- Embedding model: `sentence-transformers/all-MiniLM-L6-v2`
-- Vector store: `Chroma`
-- LLM: `gemini-3-flash-preview`
-- Chunking: `RecursiveCharacterTextSplitter`
-
-## Troubleshooting
-
-### `GOOGLE_API_KEY is missing in the .env file`
-
-Add your Gemini API key to the root `.env` file.
-
-### `Vector database not found`
-
-Run:
-
-```powershell
-.\venv\Scripts\python Rag-practice\ingestion-pipeline.py
+**Response:**
+```json
+{
+  "api": "UP",
+  "groq": "UP",
+  "qdrant": "UP"
+}
 ```
 
-before running the retrieval pipeline.
+## Self-Healing Strategy
 
-### Unicode or encoding errors
+| Attempt | Strategy     | Top-K | Threshold | Query Rewrite |
+|---------|-------------|-------|-----------|---------------|
+| 1       | Default     | 4     | 0.30      | No            |
+| 2       | Expanded    | 8     | 0.30      | Yes           |
+| 3       | Aggressive  | 12    | 0.20      | Yes           |
 
-- Keep source `.txt` files in UTF-8 when possible
-- The current loader already forces UTF-8 for text files
-- The retrieval script reconfigures stdout for UTF-8 on Windows
+## Future Integration
 
-### Hugging Face download warnings
+Designed for integration into a microservices architecture:
 
-The embedding model may need to download on first run. This is normal. Adding `HUGGINGFACEHUB_API_TOKEN` can make this smoother.
-
-## Future Improvements
-
-- support PDF and DOCX ingestion
-- add source citations in answers
-- build a Streamlit or Gradio UI
-- expose chunk size and `k` as configurable arguments
-- add automatic re-indexing when documents change
-
-## Commands Summary
-
-```powershell
-.\venv\Scripts\python Rag-practice\ingestion-pipeline.py
-.\venv\Scripts\python Rag-practice\retrivalpipeline.py
-.\venv\Scripts\python Rag-practice\retrivalpipeline.py "Your question here"
 ```
+React Frontend → Spring Boot API Gateway → Self-Healing RAG (FastAPI) → Qdrant + Groq
+```
+
+## License
+
+MIT
