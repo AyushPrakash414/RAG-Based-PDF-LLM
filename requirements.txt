@@ -17,7 +17,7 @@ groq>=0.9.0
 qdrant-client>=1.12.0
 
 # --- Embeddings ---
-sentence-transformers>=3.3.0
+fastembed>=0.2.6
 
 # --- Document Processing ---
 langchain-community>=0.3.0

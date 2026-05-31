@@ -17,7 +17,7 @@ from qdrant_client.http.models import (
     VectorParams,
     Filter,
 )
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 from app.interfaces.vector_store import VectorStore
 from app.config.settings import Settings
@@ -52,8 +52,8 @@ class QdrantVectorStore(VectorStore):
         else:
             self._client = QdrantClient(url=settings.qdrant_url)
 
-        # Initialise embedding model
-        self._embedding_model = SentenceTransformer(settings.embedding_model)
+        # Initialise embedding model using fastembed for lower memory usage
+        self._embedding_model = TextEmbedding(model_name=settings.embedding_model)
         self._embedding_dimension = settings.embedding_dimension
 
         # Ensure collection exists
@@ -92,7 +92,7 @@ class QdrantVectorStore(VectorStore):
         Returns:
             List of embedding vectors.
         """
-        embeddings = self._embedding_model.encode(texts, show_progress_bar=False)
+        embeddings = list(self._embedding_model.embed(texts))
         return [emb.tolist() for emb in embeddings]
 
     def embed_query(self, query: str) -> list[float]:
@@ -105,8 +105,9 @@ class QdrantVectorStore(VectorStore):
         Returns:
             The embedding vector.
         """
-        embedding = self._embedding_model.encode(query, show_progress_bar=False)
-        return embedding.tolist()
+        # fastembed expects a list of strings and returns a generator of embeddings
+        embeddings = list(self._embedding_model.embed([query]))
+        return embeddings[0].tolist()
 
     async def add_documents(
         self,
