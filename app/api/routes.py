@@ -80,8 +80,9 @@ async def ask_question(
         ) from exc
 
 
-@router.get(
+@router.api_route(
     "/health",
+    methods=["GET", "HEAD"],
     response_model=HealthResponse,
     summary="Health check",
     description="Check the health of the API, Groq, and Qdrant.",
