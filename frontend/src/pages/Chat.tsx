@@ -1,52 +1,143 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Send, Paperclip, Shield, Search, Bot as BotIcon, FileText, Database } from 'lucide-react';
 import { NeoCard } from '../components/shared/NeoCard';
 import { NeoButton } from '../components/shared/NeoButton';
-import { NeoInput } from '../components/shared/NeoInput';
 import { NeoChatBubble } from '../components/shared/NeoChatBubble';
+import api from '../api/axios';
 import styles from './Chat.module.css';
 
-// Mock Data
-const mockSessions = [
-  { id: '1', title: 'Ramayana Research' },
-  { id: '2', title: 'Project Notes' },
-  { id: '3', title: 'History Notes' },
-];
+interface Session {
+  id: string;
+  title: string;
+}
 
-const mockMessages = [
-  {
-    id: '1',
-    role: 'user' as const,
-    content: 'What were the key events in the Aranya Kanda of the Ramayana?',
-    timestamp: '10:42 AM'
-  },
-  {
-    id: '2',
-    role: 'assistant' as const,
-    content: 'The Aranya Kanda (The Book of the Forest) is the third book of the Ramayana. Key events include:\n\n1. Rama, Sita, and Lakshmana journey deeper into the Dandaka forest.\n2. The encounter with the demoness Surpanakha, whose nose is cut off by Lakshmana.\n3. The demon king Ravana abducts Sita with the help of Maricha, who takes the form of a golden deer.\n4. Rama and Lakshmana discover the dying vulture Jatayu, who fought Ravana to save Sita.',
-    confidence: 94,
-    sources: [
-      { filename: 'ramayana.txt', chunkId: 12 },
-      { filename: 'ramayana.txt', chunkId: 14 }
-    ],
-    timestamp: '10:43 AM'
-  }
-];
+interface Source {
+  filename: string;
+  chunkId?: number;
+}
+
+interface Message {
+  id: string;
+  role: string;
+  content: string;
+  timestamp?: string;
+  confidence?: number;
+  sources?: string[] | Source[];
+}
 
 export const Chat: React.FC = () => {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [activeSession, setActiveSession] = useState('1');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch all sessions on mount
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  // Fetch messages when active session changes
+  useEffect(() => {
+    if (activeSession) {
+      fetchHistory(activeSession);
+    } else {
+      setMessages([]);
+    }
+  }, [activeSession]);
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const fetchSessions = async () => {
+    try {
+      const { data } = await api.get('/chat/session');
+      setSessions(data);
+      if (data.length > 0 && !activeSession) {
+        setActiveSession(data[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch sessions', err);
+    }
+  };
+
+  const fetchHistory = async (sessionId: string) => {
+    try {
+      const { data } = await api.get(`/chat/history/${sessionId}`);
+      setMessages(data);
+    } catch (err) {
+      console.error('Failed to fetch history', err);
+    }
+  };
+
+  const handleNewChat = async () => {
+    try {
+      const { data } = await api.post('/chat/session', { title: 'New Conversation' });
+      setSessions([data, ...sessions]);
+      setActiveSession(data.id);
+    } catch (err) {
+      console.error('Failed to create new chat', err);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || !activeSession || loading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const { data } = await api.post(`/chat/ask/${activeSession}`, { question: userMessage.content });
+      
+      const aiMessage: Message = {
+        id: data.id || (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.content || data.answer || "No response",
+        confidence: data.confidence,
+        sources: data.sources,
+        timestamp: data.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (err) {
+      console.error('Failed to get answer', err);
+      // Optionally show an error message bubble
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // Get the latest AI message to extract sources for the Right Panel
+  const latestAiMessage = [...messages].reverse().find(m => m.role.toLowerCase() === 'assistant' || m.role.toLowerCase() === 'ai');
 
   return (
     <div className={styles.chatContainer}>
       
       {/* Left Sidebar - Chat Sessions */}
       <div className={styles.leftPanel}>
-        <NeoButton fullWidth icon={<Plus size={18} />} className={styles.newChatBtn}>
+        <NeoButton fullWidth icon={<Plus size={18} />} className={styles.newChatBtn} onClick={handleNewChat}>
           New Chat
         </NeoButton>
         <div className={styles.sessionList}>
-          {mockSessions.map((session) => (
+          {sessions.map((session) => (
             <div 
               key={session.id} 
               className={`${styles.sessionItem} ${activeSession === session.id ? styles.activeSession : ''}`}
@@ -56,41 +147,56 @@ export const Chat: React.FC = () => {
               <span className={styles.sessionTitle}>{session.title}</span>
             </div>
           ))}
+          {sessions.length === 0 && <p style={{ padding: '1rem', color: '#666', fontSize: '0.9rem' }}>No conversations yet.</p>}
         </div>
       </div>
 
       {/* Center - Chat Area */}
       <div className={styles.centerPanel}>
         <div className={styles.messagesArea}>
-          {/* Self-Healing Status Card - Shown before the latest AI message */}
-          <NeoCard className={styles.statusCard}>
-            <h4>Self-Healing Status</h4>
-            <div className={styles.statusGrid}>
-              <div className={styles.statusItem}>
-                <Search size={16} className={styles.statusIconSuccess} />
-                <span>Retrieval Valid</span>
-              </div>
-              <div className={styles.statusItem}>
-                <Shield size={16} className={styles.statusIconSuccess} />
-                <span>Critic Approved</span>
-              </div>
-              <div className={styles.statusItem}>
-                <BotIcon size={16} className={styles.statusIconSuccess} />
-                <span>Confidence 94%</span>
-              </div>
-            </div>
-          </NeoCard>
-
-          {mockMessages.map((msg) => (
-            <NeoChatBubble
-              key={msg.id}
-              role={msg.role}
-              content={msg.content}
-              confidence={msg.confidence}
-              sources={msg.sources}
-              timestamp={msg.timestamp}
-            />
+          
+          {messages.map((msg, index) => (
+            <React.Fragment key={msg.id}>
+              {/* Show Status Card only for the latest AI message */}
+              {(msg.role.toLowerCase() === 'assistant' || msg.role.toLowerCase() === 'ai') && index === messages.length - 1 && (
+                <NeoCard className={styles.statusCard}>
+                  <h4>Self-Healing Status</h4>
+                  <div className={styles.statusGrid}>
+                    <div className={styles.statusItem}>
+                      <Search size={16} className={styles.statusIconSuccess} />
+                      <span>Retrieval Valid</span>
+                    </div>
+                    <div className={styles.statusItem}>
+                      <Shield size={16} className={styles.statusIconSuccess} />
+                      <span>Critic Approved</span>
+                    </div>
+                    {msg.confidence && (
+                      <div className={styles.statusItem}>
+                        <BotIcon size={16} className={styles.statusIconSuccess} />
+                        <span>Confidence {msg.confidence}%</span>
+                      </div>
+                    )}
+                  </div>
+                </NeoCard>
+              )}
+              
+              <NeoChatBubble
+                role={msg.role.toLowerCase() === 'user' ? 'user' : 'assistant'}
+                content={msg.content}
+                confidence={msg.confidence}
+                sources={msg.sources}
+                timestamp={msg.timestamp}
+              />
+            </React.Fragment>
           ))}
+          
+          {loading && (
+            <div style={{ padding: '1rem', fontStyle: 'italic', color: '#666' }}>
+              AI is thinking...
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
         </div>
 
         <div className={styles.inputArea}>
@@ -100,12 +206,14 @@ export const Chat: React.FC = () => {
             </button>
             <textarea 
               className={styles.chatInput} 
-              placeholder="Ask a question about your documents..."
+              placeholder={activeSession ? "Ask a question about your documents..." : "Create a new chat first..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={!activeSession || loading}
               rows={1}
             />
-            <button className={styles.sendBtn} title="Send Message">
+            <button className={styles.sendBtn} title="Send Message" onClick={handleSendMessage} disabled={!activeSession || loading || !input.trim()}>
               <Send size={20} />
             </button>
           </div>
@@ -117,23 +225,30 @@ export const Chat: React.FC = () => {
         <h3>Sources Panel</h3>
         <p className={styles.sourcesDesc}>Documents referenced in the current answer.</p>
         
-        <NeoCard className={styles.sourceCard}>
-          <div className={styles.sourceHeader}>
-            <FileText size={18} />
-            <span className={styles.sourceFilename}>ramayana.txt</span>
-          </div>
-          <div className={styles.sourceChunks}>
-            <div className={styles.chunkTag}>
-              <Database size={12} /> Chunk 12
+        {latestAiMessage?.sources && latestAiMessage.sources.length > 0 ? (
+          <NeoCard className={styles.sourceCard}>
+            <div className={styles.sourceHeader}>
+              <FileText size={18} />
+              <span className={styles.sourceFilename}>Reference Documents</span>
             </div>
-            <div className={styles.chunkTag}>
-              <Database size={12} /> Chunk 14
+            <div className={styles.sourceChunks}>
+              {latestAiMessage.sources.map((src: any, i) => (
+                <div key={i} className={styles.chunkTag}>
+                  <Database size={12} /> {typeof src === 'string' ? src : src.filename || 'Document'}
+                </div>
+              ))}
             </div>
+            {latestAiMessage.confidence && (
+              <div className={styles.sourceConfidence}>
+                Confidence: <strong>{latestAiMessage.confidence}%</strong>
+              </div>
+            )}
+          </NeoCard>
+        ) : (
+          <div style={{ padding: '1rem', background: '#e0e0e0', borderRadius: '8px', border: '2px solid #111', fontSize: '0.9rem' }}>
+            No sources referenced yet.
           </div>
-          <div className={styles.sourceConfidence}>
-            Confidence: <strong>94%</strong>
-          </div>
-        </NeoCard>
+        )}
       </div>
 
     </div>

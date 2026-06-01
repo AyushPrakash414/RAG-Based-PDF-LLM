@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import router, get_orchestrator, get_llm_provider, get_vector_store
+from app.api.routes import router, get_orchestrator, get_llm_provider, get_vector_store, get_ingestion_service
 from app.config.settings import get_settings, Settings
 from app.providers.groq_provider import GroqProvider
 from app.providers.qdrant_vector_store import QdrantVectorStore
@@ -21,6 +21,7 @@ from app.services.orchestrator_service import OrchestratorService
 from app.services.query_rewriter import QueryRewriter
 from app.services.retrieval_service import RetrievalService
 from app.services.retrieval_validator import RetrievalValidator
+from app.services.ingestion_service import IngestionService
 from app.utils.logger import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ async def lifespan(app: FastAPI):
     query_rewriter = QueryRewriter(
         llm_provider=groq_provider, settings=settings
     )
+    ingestion_service = IngestionService(vector_store=qdrant_store)
 
     orchestrator = OrchestratorService(
         retrieval_service=retrieval_service,
@@ -75,6 +77,7 @@ async def lifespan(app: FastAPI):
     app.dependency_overrides[get_orchestrator] = lambda: orchestrator
     app.dependency_overrides[get_llm_provider] = lambda: groq_provider
     app.dependency_overrides[get_vector_store] = lambda: qdrant_store
+    app.dependency_overrides[get_ingestion_service] = lambda: ingestion_service
 
     logger.info("===== All services initialised successfully =====")
 

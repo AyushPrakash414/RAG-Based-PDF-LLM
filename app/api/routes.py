@@ -49,6 +49,58 @@ def get_vector_store():
     raise RuntimeError("Vector store not initialised")
 
 
+def get_ingestion_service():
+    """
+    Dependency stub — replaced at startup in main.py.
+    """
+    raise RuntimeError("Ingestion service not initialised")
+
+
+from fastapi import UploadFile, Form
+
+@router.post(
+    "/documents/ingest",
+    summary="Ingest a new document",
+    description="Upload a PDF, DOCX, or TXT file to be chunked and stored in the vector database.",
+)
+async def ingest_document(
+    file: UploadFile,
+    document_id: str = Form(...),
+    ingestion_service=Depends(get_ingestion_service),
+):
+    try:
+        logger.info("POST /documents/ingest received: document_id='%s', filename='%s'", document_id, file.filename)
+        result = await ingestion_service.ingest_file(file, document_id)
+        return result
+    except Exception as exc:
+        logger.error("POST /documents/ingest failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal error processing document: {str(exc)}",
+        ) from exc
+
+
+@router.delete(
+    "/documents/{document_id}",
+    summary="Delete a document",
+    description="Delete all vector chunks associated with a document ID from Qdrant.",
+)
+async def delete_document(
+    document_id: str,
+    ingestion_service=Depends(get_ingestion_service),
+):
+    try:
+        logger.info("DELETE /documents/%s received", document_id)
+        await ingestion_service.delete_document(document_id)
+        return {"status": "success", "message": f"Document {document_id} deleted."}
+    except Exception as exc:
+        logger.error("DELETE /documents/%s failed: %s", document_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal error deleting document: {str(exc)}",
+        ) from exc
+
+
 @router.post(
     "/ask",
     response_model=AskResponse,

@@ -40,7 +40,8 @@ export const Register: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'https://rag-based-pdf-llm-1.onrender.com/oauth2/authorization/google';
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    window.location.href = `${baseURL}/oauth2/authorization/google`;
   };
 
   return (

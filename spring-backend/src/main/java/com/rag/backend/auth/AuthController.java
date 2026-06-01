@@ -39,6 +39,7 @@ public class AuthController {
             cookie.setHttpOnly(true);
             cookie.setSecure(true);
             cookie.setPath("/");
+            cookie.setAttribute("SameSite", "None");
             cookie.setMaxAge((int) (8 * 24 * 60 * 60)); // 8 days
             response.addCookie(cookie);
 
@@ -64,6 +65,7 @@ public class AuthController {
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
+        cookie.setAttribute("SameSite", "None");
         cookie.setMaxAge((int) (8 * 24 * 60 * 60)); // 8 days
         response.addCookie(cookie);
 
@@ -104,6 +106,8 @@ public class AuthController {
         Cookie cookie = new Cookie("refresh_token", null);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "None");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
 

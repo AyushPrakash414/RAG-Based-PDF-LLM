@@ -216,6 +216,26 @@ class QdrantVectorStore(VectorStore):
         )
         logger.info("Deleted %d points from Qdrant", len(ids))
 
+    async def delete_by_document_id(self, document_id: str) -> None:
+        """
+        Delete all points belonging to a specific document ID.
+        """
+        from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+
+        await asyncio.to_thread(
+            self._client.delete,
+            collection_name=self._collection_name,
+            points_selector=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id",
+                        match=MatchValue(value=document_id)
+                    )
+                ]
+            ),
+        )
+        logger.info("Deleted all points for document %s from Qdrant", document_id)
+
     async def health_check(self) -> bool:
         """
         Check if Qdrant is reachable.

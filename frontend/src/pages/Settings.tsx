@@ -66,7 +66,7 @@ export const Settings: React.FC = () => {
               <div className={styles.avatarSection}>
                 <div className={styles.avatarLarge}>
                   {user?.avatarId ? (
-                    <img src={`https://rag-based-pdf-llm-1.onrender.com/users/avatar/${user.avatarId}`} alt="Avatar" />
+                    <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/users/avatar/${user.avatarId}`} alt="Avatar" />
                   ) : user?.profilePicture ? (
                     <img src={user.profilePicture} alt="Avatar" />
                   ) : (

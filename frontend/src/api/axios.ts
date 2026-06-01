@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://rag-based-pdf-llm-1.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
   withCredentials: true, // For HTTPOnly cookies
 });
 
@@ -25,8 +25,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
+        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
         const { data } = await axios.post(
-          'https://rag-based-pdf-llm-1.onrender.com/auth/refresh',
+          `${baseURL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
