@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  spring-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-spring-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - MONGO_URI=${MONGO_URI}
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - PYTHON_SERVICE_URL=${PYTHON_SERVICE_URL}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+    restart: unless-stopped
