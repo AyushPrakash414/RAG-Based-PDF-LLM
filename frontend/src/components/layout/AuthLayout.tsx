@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { Home, MessageSquare, FileText, Settings, LogOut, Menu, X, Bot } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import styles from './AuthLayout.module.css';
@@ -7,7 +7,6 @@ import styles from './AuthLayout.module.css';
 export const AuthLayout: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { logout, user } = useAuth();
-  const navigate = useNavigate();
 
   const toggleSidebar = () => setIsMobileOpen(!isMobileOpen);
 

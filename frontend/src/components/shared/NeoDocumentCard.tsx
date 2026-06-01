@@ -1,7 +1,6 @@
 import React from 'react';
 import { FileText, Trash2, Eye } from 'lucide-react';
 import { NeoCard } from './NeoCard';
-import { NeoButton } from './NeoButton';
 import styles from './NeoDocumentCard.module.css';
 
 interface NeoDocumentCardProps {

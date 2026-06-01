@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Search, FileText } from 'lucide-react';
+import { Upload, Search } from 'lucide-react';
 import { NeoCard } from '../components/shared/NeoCard';
 import { NeoButton } from '../components/shared/NeoButton';
 import { NeoInput } from '../components/shared/NeoInput';

@@ -22,7 +22,7 @@ interface Message {
   content: string;
   timestamp?: string;
   confidence?: number;
-  sources?: string[] | Source[];
+  sources?: Source[];
 }
 
 export const Chat: React.FC = () => {
@@ -105,7 +105,7 @@ export const Chat: React.FC = () => {
         role: 'assistant',
         content: data.content || data.answer || "No response",
         confidence: data.confidence,
-        sources: data.sources,
+        sources: data.sources ? data.sources.map((s: any) => typeof s === 'string' ? { filename: s } : s) : undefined,
         timestamp: data.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
@@ -185,7 +185,7 @@ export const Chat: React.FC = () => {
                 content={msg.content}
                 confidence={msg.confidence}
                 sources={msg.sources}
-                timestamp={msg.timestamp}
+                timestamp={msg.timestamp || ''}
               />
             </React.Fragment>
           ))}
