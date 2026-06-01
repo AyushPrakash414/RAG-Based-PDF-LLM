@@ -27,3 +27,25 @@ services:
         value: INFO
       - key: PYTHON_VERSION
         value: "3.11.0"
+
+  - type: web
+    name: spring-backend
+    env: docker
+    region: oregon # or whichever region you prefer
+    dockerContext: ./spring-backend
+    dockerfilePath: ./spring-backend/Dockerfile
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: OAUTH_CLIENT_ID
+        sync: false
+      - key: OAUTH_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PYTHON_SERVICE_URL
+        sync: false # Set this in Render Dashboard to your Python RAG Service URL
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # Set this in Render to your React Frontend URL
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
