@@ -4,7 +4,7 @@ import styles from './NeoChatBubble.module.css';
 
 interface Source {
   filename: string;
-  chunkId: number;
+  chunkId?: number;
 }
 
 interface NeoChatBubbleProps {
@@ -47,7 +47,7 @@ export const NeoChatBubble: React.FC<NeoChatBubbleProps> = ({
                 <span>Sources:</span>
                 {sources.map((s, idx) => (
                   <span key={idx} className={styles.sourceTag}>
-                    {s.filename} (Ch {s.chunkId})
+                    {s.filename} {s.chunkId !== undefined ? `(Ch ${s.chunkId})` : ''}
                   </span>
                 ))}
               </div>
