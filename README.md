@@ -1,10 +1,15 @@
-# Self-Healing RAG Microservice
+# Self-Healing RAG Platform
 
-A production-ready, **Self-Healing Retrieval-Augmented Generation (RAG)** microservice built with Python, FastAPI, Groq, and Qdrant.
+A full-stack, production-ready **Self-Healing Retrieval-Augmented Generation (RAG)** platform. 
+It features a Java 21 Spring Boot Backend for Auth and Document Management, and a Python FastAPI microservice for the core RAG AI logic powered by Groq and Qdrant.
 
 ## Architecture Overview
 
-```
+![Architecture Overview](architecture.png)
+
+### Self-Healing Logic (Python Service)
+
+```text
 User Question
      │
      ▼
@@ -45,38 +50,27 @@ User Question
 
 ## Project Structure
 
-```
-├── app/
-│   ├── api/
-│   │   └── routes.py              # FastAPI endpoints
-│   ├── services/
-│   │   ├── retrieval_service.py   # Vector store search
-│   │   ├── retrieval_validator.py # Chunk relevance validation
-│   │   ├── answer_generator.py    # LLM answer generation
-│   │   ├── answer_critic.py       # Answer grounding evaluation
-│   │   ├── query_rewriter.py      # Query optimization
-│   │   └── orchestrator_service.py# Self-healing orchestration
-│   ├── interfaces/
-│   │   ├── llm_provider.py        # Abstract LLM interface
-│   │   └── vector_store.py        # Abstract vector store interface
-│   ├── providers/
-│   │   ├── groq_provider.py       # Groq implementation
-│   │   └── qdrant_vector_store.py # Qdrant implementation
-│   ├── prompts/                   # Prompt templates (TXT)
-│   ├── models/                    # Pydantic models
-│   ├── config/
-│   │   └── settings.py            # Environment configuration
-│   ├── utils/
-│   │   └── logger.py              # Structured logging
-│   └── main.py                    # FastAPI app entry point
-├── scripts/
-│   └── ingest_documents.py        # Document ingestion script
-├── documents/                     # Source TXT documents
-├── traces/                        # Execution trace JSON files
-├── tests/
-├── requirements.txt
-├── .env
-└── README.md
+The platform is designed as a monorepo containing the microservices:
+
+```text
+RAG-Based-PDF-LLM/
+│
+├── rag-service/          # Python Self-Healing RAG Service
+│   ├── app/              # FastAPI core logic (Orchestrator, Validator, Generator)
+│   ├── documents/        # PDF & TXT documents
+│   ├── scripts/          # Ingestion scripts
+│   └── ...
+│
+├── spring-backend/       # Java Spring Boot API Gateway
+│   ├── src/main/java/com/rag/backend/
+│   │   ├── auth/         # MongoDB User & Refresh Token management
+│   │   ├── chat/         # Conversational history
+│   │   ├── document/     # Upload metadata
+│   │   └── security/     # Google OAuth2 & JWT Filtering
+│   ├── Dockerfile
+│   └── docker-compose.yml
+│
+└── frontend/             # (Upcoming) React UI
 ```
 
 ## Quick Start
@@ -177,12 +171,19 @@ curl -X POST http://localhost:8000/health
 | 2       | Expanded    | 8     | 0.30      | Yes           |
 | 3       | Aggressive  | 12    | 0.20      | Yes           |
 
-## Future Integration
+## Deployment / Getting Started
 
-Designed for integration into a microservices architecture:
-
+### 1. Spring Boot Backend
+Configure your `.env` in `spring-backend/` with Google OAuth credentials and MongoDB URI.
+```bash
+cd spring-backend
+docker compose up --build
 ```
-React Frontend → Spring Boot API Gateway → Self-Healing RAG (FastAPI) → Qdrant + Groq
+
+### 2. Python RAG Service
+Ensure Qdrant is running, and configure your Groq credentials.
+```bash
+uvicorn app.main:app --reload --port 8000
 ```
 
 ## License
