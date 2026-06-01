@@ -53,7 +53,10 @@ class QdrantVectorStore(VectorStore):
             self._client = QdrantClient(url=settings.qdrant_url)
 
         # Initialise embedding model using fastembed for lower memory usage
-        self._embedding_model = TextEmbedding(model_name=settings.embedding_model)
+        self._embedding_model = TextEmbedding(
+            model_name=settings.embedding_model,
+            threads=1  # Prevent ONNX from spawning too many threads on Render
+        )
         self._embedding_dimension = settings.embedding_dimension
 
         # Ensure collection exists
@@ -92,7 +95,8 @@ class QdrantVectorStore(VectorStore):
         Returns:
             List of embedding vectors.
         """
-        embeddings = list(self._embedding_model.embed(texts))
+        # Use a very small batch size to prevent OOM on Render free tier
+        embeddings = list(self._embedding_model.embed(texts, batch_size=2))
         return [emb.tolist() for emb in embeddings]
 
     def embed_query(self, query: str) -> list[float]:
