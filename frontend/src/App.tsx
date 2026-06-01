@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-
+import { OAuth2RedirectHandler } from './pages/OAuth2RedirectHandler';
 import { AuthLayout } from './components/layout/AuthLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Documents } from './pages/Documents';
@@ -29,6 +29,7 @@ const AppRoutes = () => {
       <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
       
       {/* Protected Routes wrapped in AuthLayout */}
       <Route element={<PrivateRoute><AuthLayout /></PrivateRoute>}>

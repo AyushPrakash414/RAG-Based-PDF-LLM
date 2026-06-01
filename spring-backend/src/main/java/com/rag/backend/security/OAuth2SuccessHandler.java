@@ -25,7 +25,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
-    @Value("${cors.allowed-origins}")
+    @Value("${frontend.url}")
     private String frontendUrl;
 
     @Override
