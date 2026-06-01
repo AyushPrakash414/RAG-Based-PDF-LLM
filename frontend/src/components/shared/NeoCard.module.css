@@ -1,0 +1,18 @@
+.neoCard {
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  color: var(--text-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.neoCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px var(--border-color);
+}
+
+.noPadding {
+  padding: 0;
+}

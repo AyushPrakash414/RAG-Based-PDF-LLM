@@ -1,0 +1,64 @@
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.inputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.neoInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 2px 2px 0px var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.neoInput:focus {
+  outline: none;
+  box-shadow: var(--shadow);
+  background-color: var(--card-bg);
+}
+
+.neoInput::placeholder {
+  color: #888;
+}
+
+.withIcon {
+  padding-left: 2.5rem;
+}
+
+.icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hasError {
+  border-color: var(--error);
+}
+
+.errorMessage {
+  font-size: 0.85rem;
+  color: var(--error);
+  font-weight: 500;
+}

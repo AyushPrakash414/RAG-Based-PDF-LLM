@@ -1,0 +1,201 @@
+.settingsContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+[data-theme='dark'] .header p {
+  color: #aaa;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.sections h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.settingsCard {
+  padding: 2rem !important;
+}
+
+/* Profile Row */
+.profileRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.avatarSection {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px dashed rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .avatarSection {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.avatarLarge {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid var(--border-color);
+  background-color: var(--bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--primary-color);
+}
+
+.avatarLarge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarUpload h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.avatarUpload p {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+[data-theme='dark'] .avatarUpload p {
+  color: #aaa;
+}
+
+.errorText {
+  color: var(--error) !important;
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.successText {
+  color: var(--success) !important;
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.profileInfo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.infoGroup label {
+  font-weight: 700;
+  color: #666;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+[data-theme='dark'] .infoGroup label {
+  color: #999;
+}
+
+.infoGroup p {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+/* Preference Row */
+.preferenceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preferenceRow h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.preferenceRow p {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+[data-theme='dark'] .preferenceRow p {
+  color: #aaa;
+}
+
+/* Danger Zone */
+.dangerZone {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dangerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dangerItem h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.dangerItem p {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+[data-theme='dark'] .dangerItem p {
+  color: #aaa;
+}
+
+.dangerDivider {
+  height: 2px;
+  background-color: rgba(0,0,0,0.1);
+  width: 100%;
+}
+
+[data-theme='dark'] .dangerDivider {
+  background-color: rgba(255,255,255,0.1);
+}
+
+@media (max-width: 640px) {
+  .avatarSection {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .profileInfo {
+    grid-template-columns: 1fr;
+  }
+  
+  .preferenceRow, .dangerItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}

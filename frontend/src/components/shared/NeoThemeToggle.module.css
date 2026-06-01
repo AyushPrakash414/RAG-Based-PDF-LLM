@@ -1,0 +1,29 @@
+.toggleBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: var(--border-width) solid var(--border-color);
+  background-color: var(--card-bg);
+  box-shadow: 2px 2px 0px var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: var(--text-color);
+}
+
+.toggleBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px var(--border-color);
+}
+
+.toggleBtn:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0px var(--border-color);
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,176 @@
+.layoutContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+}
+
+.sidebar {
+  width: 260px;
+  background-color: var(--card-bg);
+  border-right: var(--border-width) solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 50;
+  transition: transform 0.3s ease;
+}
+
+.sidebarLogo {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.nav {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  color: var(--text-color);
+  font-weight: 600;
+  border: var(--border-width) solid transparent;
+  transition: all 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.active {
+  background-color: var(--primary-color);
+  border-color: var(--border-color);
+  box-shadow: 2px 2px 0px var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme='dark'] .active {
+  color: #111;
+}
+
+.sidebarFooter {
+  padding: 1.5rem;
+  border-top: var(--border-width) solid var(--border-color);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+  background-color: var(--bg-color);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  color: var(--error);
+  transition: background-color 0.2s ease;
+}
+
+.logoutBtn:hover {
+  background-color: rgba(239, 83, 80, 0.1);
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 260px;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* Mobile styles */
+.mobileHeader {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: var(--card-bg);
+  border-bottom: var(--border-width) solid var(--border-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .mobileOpen {
+    transform: translateX(0);
+  }
+  
+  .mobileHeader {
+    display: flex;
+  }
+  
+  .mainContent {
+    margin-left: 0;
+    margin-top: 60px;
+    padding: 1rem;
+  }
+  
+  .overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 45;
+  }
+}

@@ -7,8 +7,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +26,52 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final JwtUtils jwtUtils;
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+        try {
+            User user = userService.registerLocalUser(request);
+            String jwt = jwtUtils.generateTokenFromUserId(user.getId());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+            Cookie cookie = new Cookie("refresh_token", refreshToken.getToken());
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge((int) (8 * 24 * 60 * 60)); // 8 days
+            response.addCookie(cookie);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("accessToken", jwt);
+            body.put("user", user);
+            return ResponseEntity.ok(body);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        String jwt = jwtUtils.generateTokenFromUserId(userPrincipal.getId());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+
+        Cookie cookie = new Cookie("refresh_token", refreshToken.getToken());
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge((int) (8 * 24 * 60 * 60)); // 8 days
+        response.addCookie(cookie);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("accessToken", jwt);
+        body.put("user", userService.findById(userPrincipal.getId()).orElse(null));
+        return ResponseEntity.ok(body);
+    }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshtoken(HttpServletRequest request) {

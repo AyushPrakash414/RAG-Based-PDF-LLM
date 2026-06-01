@@ -13,13 +13,17 @@ public class User {
     @Id
     private String id;
     
-    @Indexed(unique = true)
+    @Indexed(unique = true, sparse = true)
     private String googleId;
     
     @Indexed(unique = true)
     private String email;
     
+    private String password; // Nullable for Google Auth users
+    private AuthProvider authProvider;
+    
     private String name;
-    private String profilePicture;
+    private String profilePicture; // Used as fallback Google Avatar URL
+    private String avatarId; // Used for custom uploaded MongoDB GridFS/Binary Avatars
     private Instant createdAt;
 }

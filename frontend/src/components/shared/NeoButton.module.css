@@ -1,0 +1,61 @@
+.neoButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: all 0.15s ease-in-out;
+  color: var(--text-color);
+}
+
+.neoButton:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.neoButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.primary {
+  background-color: var(--primary-color);
+}
+
+.secondary {
+  background-color: var(--card-bg);
+}
+
+.danger {
+  background-color: var(--error);
+  color: #fff;
+}
+
+.ghost {
+  background-color: transparent;
+  border: var(--border-width) solid transparent;
+  box-shadow: none;
+}
+
+.ghost:hover {
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
