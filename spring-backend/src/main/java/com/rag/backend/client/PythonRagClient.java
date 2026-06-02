@@ -19,6 +19,9 @@ public class PythonRagClient {
     private final WebClient pythonServiceClient;
 
     public Mono<RagResponseDto> askQuestion(String question, java.util.List<String> allowedDocumentIds) {
+        System.out.println("DEBUG: Sending askQuestion to Python. Question: " + question);
+        System.out.println("DEBUG: allowedDocumentIds: " + allowedDocumentIds);
+
         return pythonServiceClient.post()
                 .uri("/ask")
                 .bodyValue(Map.of(

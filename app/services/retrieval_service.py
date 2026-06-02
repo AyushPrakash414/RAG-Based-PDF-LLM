@@ -62,12 +62,14 @@ class RetrievalService:
         query_embedding = self._vector_store.embed_query(question)
 
         # Search the vector store
+        print(f"DEBUG: Executing Qdrant search with k={k}, allowed_document_ids={allowed_document_ids}")
         results: list[dict[str, Any]] = await self._vector_store.search(
             query_embedding=query_embedding,
             k=k,
             score_threshold=score_threshold,
             allowed_document_ids=allowed_document_ids,
         )
+        print(f"DEBUG: Qdrant returned {len(results)} chunks")
 
         if not results:
             logger.warning("No chunks retrieved for question: '%s'", question[:80])
