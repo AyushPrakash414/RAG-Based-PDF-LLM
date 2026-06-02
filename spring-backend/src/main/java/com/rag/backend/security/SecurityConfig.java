@@ -42,6 +42,11 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/", "/health", "/error", "/users/avatar/**", "/oauth2/**").permitAll()
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                })
+            )
             .oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(auth -> auth
                     .authorizationRequestRepository(cookieAuthorizationRequestRepository())
