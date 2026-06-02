@@ -155,7 +155,32 @@ export const Chat: React.FC = () => {
 
       {/* Center - Chat Area */}
       <div className={styles.centerPanel}>
+        {/* Mobile Header (Hidden on Desktop) */}
+        <div className={styles.mobileHeader}>
+          <select 
+            className={styles.mobileSessionSelect} 
+            value={activeSession || ''} 
+            onChange={(e) => setActiveSession(e.target.value)}
+          >
+            {sessions.length === 0 && <option value="" disabled>No conversations...</option>}
+            {sessions.map(s => (
+              <option key={s.id} value={s.id}>{s.title}</option>
+            ))}
+          </select>
+          <button className={styles.mobileNewChatBtn} onClick={handleNewChat} title="New Chat">
+            <Plus size={20} />
+          </button>
+        </div>
+
         <div className={styles.messagesArea}>
+          
+          {sessions.length === 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1rem', color: '#666' }}>
+              <MessageSquareIcon />
+              <p>Welcome! Start a new conversation to ask questions about your documents.</p>
+              <NeoButton onClick={handleNewChat} icon={<Plus size={18} />}>Start New Chat</NeoButton>
+            </div>
+          )}
           
           {messages.map((msg, index) => {
             const isAi = msg.role.toLowerCase() === 'assistant' || msg.role.toLowerCase() === 'ai';
