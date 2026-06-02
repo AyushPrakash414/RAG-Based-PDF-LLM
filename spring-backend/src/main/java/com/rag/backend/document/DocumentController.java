@@ -45,7 +45,7 @@ public class DocumentController {
             documentService.deleteDocument(id, userPrincipal.getId());
             return ResponseEntity.ok("Document deleted successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(500).body("Error deleting document: " + e.getMessage());
         }
     }
 }

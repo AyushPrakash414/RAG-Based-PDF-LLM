@@ -64,8 +64,16 @@ public class ChatService {
         ChatMessage aiMsg = new ChatMessage();
         aiMsg.setSessionId(sessionId);
         aiMsg.setRole("AI");
-        aiMsg.setContent(responseDto != null ? responseDto.getAnswer() : "Failed to get answer");
-        aiMsg.setSources(responseDto != null ? responseDto.getSources() : null);
+        if (responseDto != null) {
+            aiMsg.setContent(responseDto.getAnswer());
+            aiMsg.setSources(responseDto.getSources());
+            aiMsg.setConfidence(responseDto.getConfidence());
+            aiMsg.setAttempts(responseDto.getAttempts());
+            aiMsg.setStatus(responseDto.getStatus());
+        } else {
+            aiMsg.setContent("Failed to get answer");
+            aiMsg.setStatus("ERROR");
+        }
         aiMsg.setTimestamp(Instant.now());
         return chatMessageRepository.save(aiMsg);
     }

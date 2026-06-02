@@ -10,4 +10,5 @@ public class RagResponseDto {
     private List<String> sources;
     private Double confidence;
     private Integer attempts;
+    private String status;
 }

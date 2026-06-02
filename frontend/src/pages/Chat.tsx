@@ -22,6 +22,7 @@ interface Message {
   content: string;
   timestamp?: string;
   confidence?: number;
+  status?: string;
   sources?: Source[];
 }
 
@@ -105,6 +106,7 @@ export const Chat: React.FC = () => {
         role: 'assistant',
         content: data.content || data.answer || "No response",
         confidence: data.confidence,
+        status: data.status,
         sources: data.sources ? data.sources.map((s: any) => typeof s === 'string' ? { filename: s } : s) : undefined,
         timestamp: data.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -155,25 +157,32 @@ export const Chat: React.FC = () => {
       <div className={styles.centerPanel}>
         <div className={styles.messagesArea}>
           
-          {messages.map((msg, index) => (
+          {messages.map((msg, index) => {
+            const isAi = msg.role.toLowerCase() === 'assistant' || msg.role.toLowerCase() === 'ai';
+            const isApproved = msg.status === 'APPROVED';
+            return (
             <React.Fragment key={msg.id}>
               {/* Show Status Card only for the latest AI message */}
-              {(msg.role.toLowerCase() === 'assistant' || msg.role.toLowerCase() === 'ai') && index === messages.length - 1 && (
+              {isAi && index === messages.length - 1 && (
                 <NeoCard className={styles.statusCard}>
                   <h4>Self-Healing Status</h4>
                   <div className={styles.statusGrid}>
                     <div className={styles.statusItem}>
-                      <Search size={16} className={styles.statusIconSuccess} />
-                      <span>Retrieval Valid</span>
+                      <Search size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
+                      <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>
+                        {isApproved ? 'Retrieval Valid' : 'Retrieval Exhausted / Failed'}
+                      </span>
                     </div>
                     <div className={styles.statusItem}>
-                      <Shield size={16} className={styles.statusIconSuccess} />
-                      <span>Critic Approved</span>
+                      <Shield size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
+                      <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>
+                        {isApproved ? 'Critic Approved' : 'Critic Rejected'}
+                      </span>
                     </div>
                     {msg.confidence && (
                       <div className={styles.statusItem}>
-                        <BotIcon size={16} className={styles.statusIconSuccess} />
-                        <span>Confidence {msg.confidence}%</span>
+                        <BotIcon size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
+                        <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>Confidence {msg.confidence}%</span>
                       </div>
                     )}
                   </div>
@@ -188,7 +197,8 @@ export const Chat: React.FC = () => {
                 timestamp={msg.timestamp || ''}
               />
             </React.Fragment>
-          ))}
+            );
+          })}
           
           {loading && (
             <div style={{ padding: '1rem', fontStyle: 'italic', color: '#666' }}>

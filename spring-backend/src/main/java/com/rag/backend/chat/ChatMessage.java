@@ -16,5 +16,9 @@ public class ChatMessage {
     private String role; // "USER" or "AI"
     private String content;
     private List<String> sources; // For AI responses
+    private Double confidence;
+    private Double retrievalConfidence;
+    private Integer attempts;
+    private String status;
     private Instant timestamp;
 }
