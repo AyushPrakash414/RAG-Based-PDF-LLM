@@ -38,6 +38,7 @@ class VectorStore(ABC):
         query_embedding: list[float],
         k: int = 4,
         score_threshold: float = 0.0,
+        allowed_document_ids: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """
         Search for the most similar documents.
@@ -46,6 +47,7 @@ class VectorStore(ABC):
             query_embedding: The embedding vector of the query.
             k: Number of results to return.
             score_threshold: Minimum similarity score to include.
+            allowed_document_ids: List of document IDs the user is allowed to search.
 
         Returns:
             A list of dicts, each containing:

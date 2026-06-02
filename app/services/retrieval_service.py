@@ -36,6 +36,7 @@ class RetrievalService:
         question: str,
         k: int = 4,
         score_threshold: float = 0.0,
+        allowed_document_ids: list[str] | None = None,
     ) -> RetrievalResult:
         """
         Retrieve the top-k most relevant chunks for a question.
@@ -44,6 +45,7 @@ class RetrievalService:
             question: The user's question (or rewritten query).
             k: Number of chunks to retrieve.
             score_threshold: Minimum similarity score to include.
+            allowed_document_ids: List of document IDs the user is allowed to search.
 
         Returns:
             A RetrievalResult with chunks, scores, sources,
@@ -64,6 +66,7 @@ class RetrievalService:
             query_embedding=query_embedding,
             k=k,
             score_threshold=score_threshold,
+            allowed_document_ids=allowed_document_ids,
         )
 
         if not results:

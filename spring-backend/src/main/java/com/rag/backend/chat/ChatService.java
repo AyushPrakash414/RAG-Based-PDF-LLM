@@ -15,6 +15,7 @@ public class ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final PythonRagClient pythonRagClient;
+    private final com.rag.backend.document.DocumentRepository documentRepository;
 
     public ChatSession createSession(String userId, String title) {
         ChatSession session = new ChatSession();
@@ -49,6 +50,12 @@ public class ChatService {
         // verify ownership
         getSession(sessionId, userId);
 
+        // Fetch allowed documents for tenant isolation
+        List<String> allowedDocumentIds = documentRepository.findByUserId(userId)
+                .stream()
+                .map(com.rag.backend.document.DocumentEntity::getQdrantDocumentId)
+                .toList();
+
         // Save User Message
         ChatMessage userMsg = new ChatMessage();
         userMsg.setSessionId(sessionId);
@@ -57,8 +64,8 @@ public class ChatService {
         userMsg.setTimestamp(Instant.now());
         chatMessageRepository.save(userMsg);
 
-        // Call Python Service
-        RagResponseDto responseDto = pythonRagClient.askQuestion(question).block();
+        // Call Python Service with tenant isolation
+        RagResponseDto responseDto = pythonRagClient.askQuestion(question, allowedDocumentIds).block();
 
         // Save AI Message
         ChatMessage aiMsg = new ChatMessage();

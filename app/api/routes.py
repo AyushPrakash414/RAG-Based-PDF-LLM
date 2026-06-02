@@ -122,6 +122,7 @@ async def ask_question(
         response = await orchestrator.ask(
             question=request.question,
             top_k_override=request.top_k,
+            allowed_document_ids=request.allowed_document_ids,
         )
         return response
     except Exception as exc:

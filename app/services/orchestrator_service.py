@@ -91,13 +91,19 @@ class OrchestratorService:
         self._settings = settings
         self._max_retries = min(settings.max_retries, len(_STRATEGIES))
 
-    async def ask(self, question: str, top_k_override: int | None = None) -> AskResponse:
+    async def ask(
+        self, 
+        question: str, 
+        top_k_override: int | None = None, 
+        allowed_document_ids: list[str] | None = None
+    ) -> AskResponse:
         """
         Process a user question through the self-healing pipeline.
 
         Args:
             question: The user's original question.
             top_k_override: Optional override for the base top_k.
+            allowed_document_ids: List of document IDs the user is allowed to search.
 
         Returns:
             An AskResponse with the answer, sources, confidence, and status.
@@ -152,6 +158,7 @@ class OrchestratorService:
                 question=current_query,
                 k=top_k,
                 score_threshold=threshold,
+                allowed_document_ids=allowed_document_ids,
             )
 
             # Initialise attempt trace

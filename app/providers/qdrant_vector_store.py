@@ -164,6 +164,7 @@ class QdrantVectorStore(VectorStore):
         query_embedding: list[float],
         k: int = 4,
         score_threshold: float = 0.0,
+        allowed_document_ids: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """
         Perform a similarity search in Qdrant.
@@ -172,16 +173,35 @@ class QdrantVectorStore(VectorStore):
             query_embedding: The query embedding vector.
             k: Number of top results to return.
             score_threshold: Minimum similarity score to include.
+            allowed_document_ids: Optional list of allowed document IDs to filter by.
 
         Returns:
             List of dicts with 'content', 'score', and 'metadata' keys.
         """
+        from qdrant_client.http.models import Filter, FieldCondition, MatchAny
+
+        query_filter = None
+        if allowed_document_ids is not None:
+            # If the user has 0 documents, prevent them from searching everything
+            if not allowed_document_ids:
+                return []
+            
+            query_filter = Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id",
+                        match=MatchAny(any=allowed_document_ids)
+                    )
+                ]
+            )
+
         results = await asyncio.to_thread(
             self._client.query_points,
             collection_name=self._collection_name,
             query=query_embedding,
             limit=k,
             score_threshold=score_threshold,
+            query_filter=query_filter,
         )
 
         search_results: list[dict[str, Any]] = []

@@ -18,10 +18,13 @@ public class PythonRagClient {
 
     private final WebClient pythonServiceClient;
 
-    public Mono<RagResponseDto> askQuestion(String question) {
+    public Mono<RagResponseDto> askQuestion(String question, java.util.List<String> allowedDocumentIds) {
         return pythonServiceClient.post()
                 .uri("/ask")
-                .bodyValue(Map.of("question", question))
+                .bodyValue(Map.of(
+                        "question", question,
+                        "allowed_document_ids", allowedDocumentIds
+                ))
                 .retrieve()
                 .bodyToMono(RagResponseDto.class);
     }
