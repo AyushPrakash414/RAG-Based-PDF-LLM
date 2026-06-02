@@ -23,3 +23,7 @@ class AskRequest(BaseModel):
         le=50,
         description="Override the default number of chunks to retrieve.",
     )
+    allowed_document_ids: list[str] = Field(
+        default_factory=list,
+        description="List of document IDs belonging to the user for tenant isolation"
+    )
