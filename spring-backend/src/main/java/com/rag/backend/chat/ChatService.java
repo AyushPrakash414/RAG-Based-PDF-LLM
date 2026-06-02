@@ -48,7 +48,19 @@ public class ChatService {
 
     public ChatMessage askQuestion(String sessionId, String question, String userId) {
         // verify ownership
-        getSession(sessionId, userId);
+        ChatSession session = getSession(sessionId, userId);
+
+        // Auto-generate title on first message
+        if (session.getTitle().equals("New Chat") || session.getTitle().equals("New Conversation")) {
+            String[] words = question.trim().split("\\s+");
+            int limit = Math.min(words.length, 4);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < limit; i++) {
+                sb.append(words[i]).append(" ");
+            }
+            session.setTitle(sb.toString().trim() + (words.length > 4 ? "..." : ""));
+            chatSessionRepository.save(session);
+        }
 
         // Fetch allowed documents for tenant isolation
         List<String> allowedDocumentIds = documentRepository.findByUserId(userId)

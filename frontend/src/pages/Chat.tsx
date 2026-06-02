@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Send, Paperclip, Shield, Search, Bot as BotIcon, FileText, Database } from 'lucide-react';
+import { Plus, Send, Paperclip, Shield, Search, Bot as BotIcon, FileText, Database, Trash2 } from 'lucide-react';
 import { NeoCard } from '../components/shared/NeoCard';
 import { NeoButton } from '../components/shared/NeoButton';
 import { NeoChatBubble } from '../components/shared/NeoChatBubble';
@@ -84,6 +84,21 @@ export const Chat: React.FC = () => {
     }
   };
 
+  const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this conversation?')) return;
+    
+    try {
+      await api.delete(`/chat/session/${id}`);
+      setSessions(prev => prev.filter(s => s.id !== id));
+      if (activeSession === id) {
+        setActiveSession(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete session', err);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim() || !activeSession || loading) return;
 
@@ -112,6 +127,11 @@ export const Chat: React.FC = () => {
       };
       
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Auto-refresh sessions to get updated title if this was the first message
+      if (messages.length === 0) {
+        fetchSessions();
+      }
     } catch (err) {
       console.error('Failed to get answer', err);
       // Optionally show an error message bubble
@@ -145,8 +165,17 @@ export const Chat: React.FC = () => {
               className={`${styles.sessionItem} ${activeSession === session.id ? styles.activeSession : ''}`}
               onClick={() => setActiveSession(session.id)}
             >
-              <MessageSquareIcon />
-              <span className={styles.sessionTitle}>{session.title}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, overflow: 'hidden' }}>
+                <MessageSquareIcon />
+                <span className={styles.sessionTitle}>{session.title}</span>
+              </div>
+              <button 
+                className={styles.deleteSessionBtn} 
+                onClick={(e) => handleDeleteSession(session.id, e)}
+                title="Delete Conversation"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           ))}
           {sessions.length === 0 && <p style={{ padding: '1rem', color: '#666', fontSize: '0.9rem' }}>No conversations yet.</p>}
