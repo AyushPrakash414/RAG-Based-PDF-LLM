@@ -249,22 +249,34 @@ class IngestionService:
         self, task: IngestionTask, content: bytes
     ) -> None:
         """
-        Process file ingestion with streaming and progress tracking.
-
-        For PDFs: processes page-by-page in windows.
-        For DOCX/TXT: processes in paragraph/line batches.
+        Process file ingestion using the Factory Method pattern.
         """
+        from app.services.loaders.loader_factory import LoaderFactory
+
         task.status = IngestionStatus.PROCESSING
         filename = task.filename
         document_id = task.document_id
 
         try:
-            if filename.lower().endswith(".pdf"):
-                await self._ingest_pdf_streaming(task, content)
-            elif filename.lower().endswith(".docx"):
-                await self._ingest_docx_streaming(task, content)
-            else:
-                await self._ingest_text_streaming(task, content)
+            loader = LoaderFactory.get_loader(filename)
+            
+            async for text_window, progress_pct in loader.load(content):
+                chunks = self.text_splitter.split_text(text_window)
+                
+                if chunks:
+                    await self._embed_and_store_batch(
+                        chunks=chunks,
+                        document_id=document_id,
+                        filename=filename,
+                        start_chunk_index=task.chunks_processed,
+                    )
+                    task.chunks_processed += len(chunks)
+                    
+                task.progress_pct = progress_pct
+                await asyncio.sleep(0)
+
+            if task.chunks_processed == 0:
+                raise ValueError("No text could be extracted from the document")
 
             task.status = IngestionStatus.COMPLETED
             task.progress_pct = 100.0
@@ -291,132 +303,6 @@ class IngestionService:
                 e,
                 exc_info=True,
             )
-
-    async def _ingest_pdf_streaming(
-        self, task: IngestionTask, content: bytes
-    ) -> None:
-        """
-        Stream-ingest a PDF page-by-page in windows.
-
-        Never holds more than page_window_size pages of text + their
-        embeddings in memory at once.
-        """
-        import fitz  # PyMuPDF
-
-        doc = fitz.open(stream=content, filetype="pdf")
-        total_pages = doc.page_count
-
-        if total_pages == 0:
-            doc.close()
-            raise ValueError("PDF contains no pages")
-
-        try:
-            for window_start in range(0, total_pages, self._page_window_size):
-                window_end = min(
-                    window_start + self._page_window_size, total_pages
-                )
-
-                # Extract text from this window of pages
-                window_text = ""
-                for page_num in range(window_start, window_end):
-                    page = doc[page_num]
-                    window_text += page.get_text() + "\n"
-
-                if not window_text.strip():
-                    task.progress_pct = (window_end / total_pages) * 100
-                    continue
-
-                # Chunk the window text
-                chunks = self.text_splitter.split_text(window_text)
-
-                if chunks:
-                    await self._embed_and_store_batch(
-                        chunks=chunks,
-                        document_id=task.document_id,
-                        filename=task.filename,
-                        start_chunk_index=task.chunks_processed,
-                    )
-                    task.chunks_processed += len(chunks)
-
-                task.progress_pct = (window_end / total_pages) * 100
-
-                # Yield control to event loop
-                await asyncio.sleep(0)
-
-        finally:
-            doc.close()
-
-        if task.chunks_processed == 0:
-            raise ValueError("No text could be extracted from the PDF")
-
-    async def _ingest_docx_streaming(
-        self, task: IngestionTask, content: bytes
-    ) -> None:
-        """Stream-ingest a DOCX by processing paragraphs in batches."""
-        import docx
-
-        doc = docx.Document(io.BytesIO(content))
-        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-
-        if not paragraphs:
-            raise ValueError("No text could be extracted from the DOCX")
-
-        # Process paragraphs in batches
-        batch_size = 50  # paragraphs per batch
-        total_batches = (len(paragraphs) + batch_size - 1) // batch_size
-
-        for batch_idx in range(0, len(paragraphs), batch_size):
-            batch_paras = paragraphs[batch_idx:batch_idx + batch_size]
-            batch_text = "\n".join(batch_paras)
-
-            chunks = self.text_splitter.split_text(batch_text)
-
-            if chunks:
-                await self._embed_and_store_batch(
-                    chunks=chunks,
-                    document_id=task.document_id,
-                    filename=task.filename,
-                    start_chunk_index=task.chunks_processed,
-                )
-                task.chunks_processed += len(chunks)
-
-            current_batch = batch_idx // batch_size + 1
-            task.progress_pct = (current_batch / total_batches) * 100
-
-            await asyncio.sleep(0)
-
-    async def _ingest_text_streaming(
-        self, task: IngestionTask, content: bytes
-    ) -> None:
-        """Stream-ingest a text file in buffer chunks."""
-        text = content.decode("utf-8", errors="replace")
-
-        if not text.strip():
-            raise ValueError("No text could be extracted from the document")
-
-        # Process in ~50KB text windows
-        window_size = 50_000
-        total_len = len(text)
-
-        for start in range(0, total_len, window_size):
-            window = text[start:start + window_size]
-
-            chunks = self.text_splitter.split_text(window)
-
-            if chunks:
-                await self._embed_and_store_batch(
-                    chunks=chunks,
-                    document_id=task.document_id,
-                    filename=task.filename,
-                    start_chunk_index=task.chunks_processed,
-                )
-                task.chunks_processed += len(chunks)
-
-            task.progress_pct = min(
-                100.0, ((start + window_size) / total_len) * 100
-            )
-
-            await asyncio.sleep(0)
 
     async def _embed_and_store_batch(
         self,

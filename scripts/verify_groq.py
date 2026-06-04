@@ -22,6 +22,7 @@ from app.services.answer_critic import AnswerCritic
 from app.services.answer_generator import AnswerGenerator
 from app.services.orchestrator_service import OrchestratorService
 from app.services.retrieval_service import RetrievalService
+from app.services.retrieval.vector_search_strategy import VectorSearchStrategy
 
 
 async def main():
@@ -111,7 +112,8 @@ async def main():
     # Initialize Qdrant and Retrieval service
     print("   Initializing Vector Store & Retrieval Service...")
     vector_store = QdrantVectorStore(settings)
-    retrieval_service = RetrievalService(vector_store)
+    strategy = VectorSearchStrategy(vector_store)
+    retrieval_service = RetrievalService(strategy=strategy)
 
     orchestrator = OrchestratorService(
         retrieval_service=retrieval_service,

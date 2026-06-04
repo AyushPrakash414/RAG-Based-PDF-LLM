@@ -20,6 +20,7 @@ from app.interfaces.llm_provider import LLMProvider
 from app.interfaces.vector_store import VectorStore
 from app.services.ingestion_service import IngestionService
 from app.services.retrieval_service import RetrievalService
+from app.services.retrieval.vector_search_strategy import VectorSearchStrategy
 from app.services.spell_corrector import SpellCorrector
 
 
@@ -168,9 +169,10 @@ def spell_corrector():
 @pytest.fixture
 def retrieval_service(mock_vector_store, spell_corrector):
     """Provide a retrieval service with mock vector store and spell corrector."""
+    strategy = VectorSearchStrategy(mock_vector_store)
     return RetrievalService(
-        vector_store=mock_vector_store,
-        spell_corrector=spell_corrector,
+        strategy=strategy,
+        spell_corrector=spell_corrector
     )
 
 

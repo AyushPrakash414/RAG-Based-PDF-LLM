@@ -20,6 +20,7 @@ from unittest.mock import AsyncMock
 from app.services.orchestrator_service import OrchestratorService
 from app.services.orchestrator_service import OrchestratorService
 from app.services.retrieval_service import RetrievalService
+from app.services.retrieval.vector_search_strategy import VectorSearchStrategy
 from unittest.mock import MagicMock
 
 mock_vs = MockVectorStore()
@@ -28,7 +29,8 @@ mock_llm = MockLLMProvider()
 app.dependency_overrides[get_llm_provider] = lambda: mock_llm
 app.dependency_overrides[get_vector_store] = lambda: mock_vs
 
-mock_retrieval = RetrievalService(vector_store=mock_vs)
+mock_strategy = VectorSearchStrategy(mock_vs)
+mock_retrieval = RetrievalService(strategy=mock_strategy)
 from app.config.settings import get_settings
 _settings = get_settings()
 

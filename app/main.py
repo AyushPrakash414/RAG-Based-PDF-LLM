@@ -21,6 +21,7 @@ from app.services.answer_generator import AnswerGenerator
 from app.services.orchestrator_service import OrchestratorService
 from app.services.query_rewriter import QueryRewriter
 from app.services.retrieval_service import RetrievalService
+from app.services.retrieval.vector_search_strategy import VectorSearchStrategy
 from app.services.retrieval_validator import RetrievalValidator
 from app.services.ingestion_service import IngestionService
 from app.services.spell_corrector import SpellCorrector
@@ -56,8 +57,9 @@ async def lifespan(app: FastAPI):
 
     # --- Initialise services ---
     spell_corrector = SpellCorrector(max_edit_distance=2)
+    vector_strategy = VectorSearchStrategy(qdrant_store)
     retrieval_service = RetrievalService(
-        vector_store=qdrant_store,
+        strategy=vector_strategy,
         spell_corrector=spell_corrector,
     )
     retrieval_validator = RetrievalValidator(

@@ -22,6 +22,7 @@ from tests.conftest import (
 )
 from app.services.ingestion_service import IngestionService
 from app.services.retrieval_service import RetrievalService
+from app.services.retrieval.vector_search_strategy import VectorSearchStrategy
 
 
 class TestCitationIngestion:
@@ -119,7 +120,8 @@ class TestCitationRetrieval:
             ids=["id1"],
         )
 
-        svc = RetrievalService(vector_store=vs)
+        strategy = VectorSearchStrategy(vs)
+        svc = RetrievalService(strategy=strategy)
         result = await svc.retrieve("What is Spring Boot?", k=4, allowed_document_ids=["doc1"])
 
         assert len(result.sources) > 0
@@ -138,7 +140,8 @@ class TestCitationRetrieval:
             ids=["id2"],
         )
 
-        svc = RetrievalService(vector_store=vs)
+        strategy = VectorSearchStrategy(vs)
+        svc = RetrievalService(strategy=strategy)
         result = await svc.retrieve("MongoDB query", k=4, allowed_document_ids=["doc2"])
 
         assert len(result.sources) > 0
@@ -157,7 +160,8 @@ class TestCitationRetrieval:
             ids=["id3"],
         )
 
-        svc = RetrievalService(vector_store=vs)
+        strategy = VectorSearchStrategy(vs)
+        svc = RetrievalService(strategy=strategy)
         result = await svc.retrieve("orphan", k=4, allowed_document_ids=["doc3"])
 
         assert len(result.sources) > 0
@@ -167,7 +171,8 @@ class TestCitationRetrieval:
     async def test_retrieval_no_results(self):
         """Empty retrieval should return empty sources list."""
         vs = MockVectorStore()
-        svc = RetrievalService(vector_store=vs)
+        strategy = VectorSearchStrategy(vs)
+        svc = RetrievalService(strategy=strategy)
         result = await svc.retrieve("nonexistent", k=4)
 
         assert result.sources == []
@@ -179,7 +184,9 @@ class TestCitationRetrieval:
         """Full pipeline: ingest a file, then retrieve — source must not be 'unknown'."""
         vs = MockVectorStore()
         ingestion = IngestionService(vector_store=vs)
-        retrieval = RetrievalService(vector_store=vs)
+        # Retrieve
+        strategy = VectorSearchStrategy(vs)
+        retrieval = RetrievalService(strategy=strategy)
 
         # Ingest
         pdf_bytes = create_test_pdf("Spring Boot microservices architecture patterns.")

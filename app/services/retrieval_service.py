@@ -9,9 +9,8 @@ Includes typo-tolerant retrieval via spell correction.
 import logging
 from typing import Any
 
-from app.interfaces.vector_store import VectorStore
+from app.services.retrieval.retrieval_strategy import RetrievalStrategy
 from app.models.response_models import RetrievalResult
-from app.providers.qdrant_vector_store import QdrantVectorStore
 from app.services.spell_corrector import SpellCorrector
 
 logger = logging.getLogger(__name__)
@@ -25,19 +24,22 @@ class RetrievalService:
 
     def __init__(
         self,
-        vector_store: QdrantVectorStore,
+        strategy: RetrievalStrategy,
         spell_corrector: SpellCorrector | None = None,
     ) -> None:
         """
         Initialise the retrieval service.
 
         Args:
-            vector_store: A concrete QdrantVectorStore instance
-                          (uses embed_query for query embedding).
+            strategy: The strategy pattern implementation for searching.
             spell_corrector: Optional spell corrector for typo tolerance.
         """
-        self._vector_store = vector_store
+        self._strategy = strategy
         self._spell_corrector = spell_corrector
+
+    def set_strategy(self, strategy: RetrievalStrategy) -> None:
+        """Dynamically update the retrieval strategy."""
+        self._strategy = strategy
 
     async def retrieve(
         self,
@@ -81,12 +83,9 @@ class RetrievalService:
                     corrected[:60],
                 )
 
-        # Generate query embedding(s)
-        query_embedding = self._vector_store.embed_query(question)
-
-        # Search with original query
-        results: list[dict[str, Any]] = await self._vector_store.search(
-            query_embedding=query_embedding,
+        # Search with original query using the strategy
+        results: list[dict[str, Any]] = await self._strategy.retrieve(
+            question=question,
             k=k,
             score_threshold=score_threshold,
             allowed_document_ids=allowed_document_ids,
@@ -94,9 +93,8 @@ class RetrievalService:
 
         # If spell correction produced a different query, search with that too
         if corrected_query:
-            corrected_embedding = self._vector_store.embed_query(corrected_query)
-            corrected_results = await self._vector_store.search(
-                query_embedding=corrected_embedding,
+            corrected_results = await self._strategy.retrieve(
+                question=corrected_query,
                 k=k,
                 score_threshold=score_threshold,
                 allowed_document_ids=allowed_document_ids,
