@@ -12,6 +12,7 @@ Produces a full RagTrace for every request.
 
 import json
 import logging
+import re
 import time
 import uuid
 from pathlib import Path
@@ -31,6 +32,25 @@ _FALLBACK_ANSWER = (
     "I do not have enough information in the provided documents "
     "to answer reliably."
 )
+
+# Patterns that may indicate prompt injection attempts
+_PROMPT_INJECTION_PATTERNS = [
+    r"ignore\s+(all\s+)?(previous|above|prior)\s+instructions",
+    r"disregard\s+(all\s+)?(previous|above|prior)",
+    r"you\s+are\s+now\s+a",
+    r"new\s+instructions?:",
+    r"system\s*:\s*",
+    r"\[\s*INST\s*\]",
+    r"<\|?system\|?>",
+]
+
+
+def _check_prompt_injection(text: str) -> bool:
+    """Check if text contains prompt injection patterns."""
+    for pattern in _PROMPT_INJECTION_PATTERNS:
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+    return False
 
 # Per-attempt retrieval strategies
 _STRATEGIES: list[dict] = [
@@ -110,6 +130,13 @@ class OrchestratorService:
         """
         request_id = str(uuid.uuid4())
         start_time = time.perf_counter()
+
+        # Check for prompt injection
+        if _check_prompt_injection(question):
+            logger.warning(
+                "Potential prompt injection detected in question: '%s'",
+                question[:80],
+            )
 
         trace = RagTrace(
             request_id=request_id,
@@ -292,7 +319,17 @@ class OrchestratorService:
             traces_dir = Path(self._settings.traces_dir)
             traces_dir.mkdir(parents=True, exist_ok=True)
 
-            trace_path = traces_dir / f"{trace.request_id}.json"
+            # Sanitize request_id to prevent path traversal
+            safe_id = re.sub(r'[^a-zA-Z0-9_-]', '', trace.request_id)
+            trace_path = traces_dir / f"{safe_id}.json"
+
+            # Verify the resolved path is inside traces_dir
+            if not trace_path.resolve().is_relative_to(traces_dir.resolve()):
+                logger.error(
+                    "Trace path traversal attempt blocked: %s", trace_path
+                )
+                return
+
             trace_data = trace.model_dump(mode="json")
 
             with open(trace_path, "w", encoding="utf-8") as f:

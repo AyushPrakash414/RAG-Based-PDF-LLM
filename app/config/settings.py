@@ -109,6 +109,21 @@ class Settings(BaseSettings):
         description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).",
     )
 
+    # --- Service-to-Service Authentication ---
+    internal_api_secret: str = Field(
+        default="",
+        description="Shared secret for HMAC-based service-to-service authentication. "
+                    "Empty string disables auth (NOT recommended for production).",
+    )
+
+    # --- Upload Limits ---
+    max_upload_size_mb: int = Field(
+        default=100,
+        ge=1,
+        le=1000,
+        description="Maximum upload file size in megabytes.",
+    )
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
