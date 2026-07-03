@@ -27,6 +27,45 @@ services:
         value: INFO
       - key: PYTHON_VERSION
         value: "3.11.0"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rag-redis
+          property: connectionString
+
+  - type: worker
+    name: rag-celery-worker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A app.config.celery_app worker --loglevel=info
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: EMBEDDING_MODEL
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: EMBEDDING_DIMENSION
+        value: "384"
+      - key: SIMILARITY_THRESHOLD
+        value: "0.1"
+      - key: TOP_K
+        value: "4"
+      - key: MAX_RETRIES
+        value: "3"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rag-redis
+          property: connectionString
 
   - type: web
     name: spring-backend
@@ -49,3 +88,13 @@ services:
         sync: false # Set this in Render to your React Frontend URL
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rag-redis
+          property: connectionString
+
+  - type: redis
+    name: rag-redis
+    plan: free
+    ipAllowList: []

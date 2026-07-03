@@ -11,11 +11,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import router, get_orchestrator, get_llm_provider, get_vector_store, get_ingestion_service
+from app.api.routes import router, get_orchestrator, get_llm_provider, get_vector_store, get_ingestion_service, get_redis_provider
 from app.config.settings import get_settings, Settings
 from app.middleware import ServiceAuthMiddleware
 from app.providers.groq_provider import GroqProvider
 from app.providers.qdrant_vector_store import QdrantVectorStore
+from app.providers.redis_provider import redis_provider
 from app.services.answer_critic import AnswerCritic
 from app.services.answer_generator import AnswerGenerator
 from app.services.orchestrator_service import OrchestratorService
@@ -90,6 +91,7 @@ async def lifespan(app: FastAPI):
     app.dependency_overrides[get_llm_provider] = lambda: groq_provider
     app.dependency_overrides[get_vector_store] = lambda: qdrant_store
     app.dependency_overrides[get_ingestion_service] = lambda: ingestion_service
+    app.dependency_overrides[get_redis_provider] = lambda: redis_provider
 
     logger.info("===== All services initialised successfully =====")
 

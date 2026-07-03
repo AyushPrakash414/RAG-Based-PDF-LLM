@@ -109,6 +109,12 @@ class Settings(BaseSettings):
         description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).",
     )
 
+    # --- Caching (Redis) ---
+    redis_url: str | None = Field(
+        default=None,
+        description="Redis connection URL for caching.",
+    )
+
     # --- Service-to-Service Authentication ---
     internal_api_secret: str = Field(
         default="",

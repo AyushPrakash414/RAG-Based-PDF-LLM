@@ -15,6 +15,8 @@ import asyncio
 import io
 import logging
 import uuid
+import os
+import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -193,17 +195,34 @@ class IngestionService:
         )
         _task_store[task_id] = task
 
-        # Launch background processing
-        asyncio.create_task(
-            self._process_ingestion(task, content)
-        )
+        from app.config.settings import get_settings
+        settings = get_settings()
 
-        logger.info(
-            "Ingestion task started: task_id=%s, filename=%s, size=%d bytes",
-            task_id,
-            filename,
-            len(content),
-        )
+        if settings.redis_url:
+            # Save to temporary file for Celery
+            temp_dir = os.path.join(tempfile.gettempdir(), "rag_ingest")
+            os.makedirs(temp_dir, exist_ok=True)
+            temp_filepath = os.path.join(temp_dir, f"{task_id}_{filename}")
+            
+            with open(temp_filepath, "wb") as f:
+                f.write(content)
+    
+            # Launch background processing via Celery
+            from app.worker.tasks import process_document_ingestion
+            process_document_ingestion.delay(
+                task_id=task_id,
+                document_id=document_id,
+                filename=filename,
+                temp_filepath=temp_filepath
+            )
+            logger.info("Enqueued ingestion task to Celery: %s", task_id)
+        else:
+            # Fallback for local development without Redis/Celery
+            logger.info("REDIS_URL not set. Falling back to asyncio.create_task for ingestion.")
+            import asyncio
+            asyncio.create_task(
+                self._process_ingestion(task, content)
+            )
 
         return {
             "task_id": task_id,

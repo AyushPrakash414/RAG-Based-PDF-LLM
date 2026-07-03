@@ -44,6 +44,11 @@ def get_ingestion_service():
     raise RuntimeError("Ingestion service not initialised")
 
 
+def get_redis_provider():
+    """Dependency stub — replaced at startup in main.py."""
+    raise RuntimeError("Redis provider not initialised")
+
+
 # ---------------------------------------------------------------------------
 # Document ingestion endpoints
 # ---------------------------------------------------------------------------
@@ -57,6 +62,7 @@ async def ingest_document(
     file: UploadFile,
     document_id: str = Form(...),
     ingestion_service=Depends(get_ingestion_service),
+    redis_provider=Depends(get_redis_provider),
 ):
     """Ingest a document synchronously (backward compatible)."""
     try:
@@ -66,6 +72,10 @@ async def ingest_document(
             file.filename,
         )
         result = await ingestion_service.ingest_file(file, document_id)
+        
+        # Increment knowledge base version in Redis to invalidate caches
+        await redis_provider.increment_knowledge_base_version()
+        
         return result
     except ValueError as exc:
         logger.warning("POST /documents/ingest validation error: %s", exc)
@@ -152,11 +162,16 @@ async def get_ingestion_status(task_id: str):
 async def delete_document(
     document_id: str,
     ingestion_service=Depends(get_ingestion_service),
+    redis_provider=Depends(get_redis_provider),
 ):
     """Delete a document and its vector chunks."""
     try:
         logger.info("DELETE /documents/%s received", document_id)
         await ingestion_service.delete_document(document_id)
+        
+        # Increment knowledge base version in Redis to invalidate caches
+        await redis_provider.increment_knowledge_base_version()
+        
         return {"status": "success", "message": f"Document {document_id} deleted."}
     except Exception as exc:
         logger.error(
@@ -181,6 +196,7 @@ async def delete_document(
 async def ask_question(
     request: AskRequest,
     orchestrator: Annotated[OrchestratorService, Depends(get_orchestrator)],
+    redis_provider=Depends(get_redis_provider),
 ) -> AskResponse:
     """
     Process a user question through the self-healing RAG pipeline.
@@ -190,11 +206,23 @@ async def ask_question(
     """
     try:
         logger.info("POST /ask received: question='%s'", request.question[:80])
+        
+        # Check Redis Cache
+        cached_response_dict = await redis_provider.get_cached_response(request.question)
+        if cached_response_dict:
+            # Reconstruct AskResponse object from the cached dictionary
+            return AskResponse(**cached_response_dict)
+        
         response = await orchestrator.ask(
             question=request.question,
             top_k_override=request.top_k,
             allowed_document_ids=request.allowed_document_ids,
         )
+        
+        # Cache the response
+        if response.status == "APPROVED":
+            await redis_provider.set_cached_response(request.question, response.model_dump())
+            
         return response
     except Exception as exc:
         logger.error("POST /ask failed: %s", exc, exc_info=True)
