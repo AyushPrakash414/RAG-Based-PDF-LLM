@@ -223,12 +223,19 @@ class OrchestratorService:
                 continue
 
             # ----- Step 5: Generate answer -----
-            context = "\n\n".join(retrieval_result.chunks)
+            context_parts = []
+            for idx, chunk in enumerate(retrieval_result.chunks):
+                source_name = retrieval_result.sources[idx]
+                context_parts.append(f"--- Source: {source_name} ---\n{chunk}")
+            context = "\n\n".join(context_parts)
+            
             try:
-                answer = await self._generator.generate(
+                generation_result = await self._generator.generate(
                     question=current_query,
                     context=context,
                 )
+                answer = generation_result.answer
+                used_sources = generation_result.sources
             except Exception as exc:
                 logger.error("Generation failed on attempt %d: %s", attempt_number, exc)
                 trace.attempts.append(attempt_trace)
@@ -249,7 +256,18 @@ class OrchestratorService:
             # ----- Step 7: Check verdict -----
             if critic_result.verdict == "APPROVED":
                 final_answer = answer
-                final_sources = list(set(retrieval_result.sources))
+                
+                # Filter final_sources to only include those actually cited by the LLM
+                retrieved_unique_sources = list(set(retrieval_result.sources))
+                final_sources = [
+                    s for s in retrieved_unique_sources 
+                    if s in used_sources
+                ]
+                
+                # If the LLM didn't cite any, fallback to all retrieved sources to be safe
+                if not final_sources:
+                    final_sources = retrieved_unique_sources
+                    
                 final_confidence = critic_result.confidence
                 final_retrieval_confidence = retrieval_result.retrieval_confidence
                 final_verdict = "APPROVED"

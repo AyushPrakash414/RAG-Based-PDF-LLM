@@ -121,3 +121,15 @@ class RetrievalResult(BaseModel):
         le=1.0,
         description="Overall retrieval confidence (avg of top scores).",
     )
+
+class GenerationResult(BaseModel):
+    """Structured output from the Answer Generator."""
+
+    answer: str = Field(
+        ...,
+        description="The generated answer.",
+    )
+    sources: list[str] = Field(
+        default_factory=list,
+        description="List of source filenames actually used in the answer.",
+    )

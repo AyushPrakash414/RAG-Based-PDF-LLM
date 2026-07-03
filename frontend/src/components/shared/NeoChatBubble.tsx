@@ -37,9 +37,9 @@ export const NeoChatBubble: React.FC<NeoChatBubbleProps> = ({
         
         {!isUser && (confidence || (sources && sources.length > 0)) && (
           <div className={styles.metaData}>
-            {confidence && (
+            {confidence !== undefined && (
               <span className={styles.confidence}>
-                Confidence: <strong>{confidence}%</strong>
+                Confidence: <strong>{Math.round(confidence * 100)}%</strong>
               </span>
             )}
             {sources && sources.length > 0 && (

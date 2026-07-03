@@ -233,10 +233,10 @@ export const Chat: React.FC = () => {
                         {isApproved ? 'Critic Approved' : 'Critic Rejected'}
                       </span>
                     </div>
-                    {msg.confidence && (
+                    {msg.confidence !== undefined && (
                       <div className={styles.statusItem}>
                         <BotIcon size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
-                        <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>Confidence {msg.confidence}%</span>
+                        <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>Confidence {Math.round(msg.confidence * 100)}%</span>
                       </div>
                     )}
                   </div>
@@ -302,9 +302,9 @@ export const Chat: React.FC = () => {
                 </div>
               ))}
             </div>
-            {latestAiMessage.confidence && (
+            {latestAiMessage.confidence !== undefined && (
               <div className={styles.sourceConfidence}>
-                Confidence: <strong>{latestAiMessage.confidence}%</strong>
+                Confidence: <strong>{Math.round(latestAiMessage.confidence * 100)}%</strong>
               </div>
             )}
           </NeoCard>

@@ -10,6 +10,8 @@ import logging
 
 from app.interfaces.llm_provider import LLMProvider
 from app.config.settings import Settings
+from app.models.response_models import GenerationResult
+from app.utils.json_parser import parse_structured_json
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +46,10 @@ class AnswerGenerator:
 
         Args:
             question: The user's question.
-            context: The concatenated retrieved chunks.
+            context: The concatenated retrieved chunks (including source headers).
 
         Returns:
-            The generated answer text.
+            A GenerationResult containing the answer and used sources.
 
         Raises:
             RuntimeError: If generation fails.
@@ -64,12 +66,17 @@ class AnswerGenerator:
         )
 
         try:
-            answer = await self._llm.generate(prompt, temperature=0.3)
+            # We use temperature=0.0 for structured output extraction to be deterministic
+            raw_response = await self._llm.generate(prompt, temperature=0.0)
+            
+            result = parse_structured_json(raw_response, GenerationResult)
+            
             logger.info(
-                "Answer generated (%d chars)",
-                len(answer),
+                "Answer generated (%d chars) with %d sources cited.",
+                len(result.answer),
+                len(result.sources),
             )
-            return answer
+            return result
         except Exception as exc:
             logger.error("Answer generation failed: %s", exc, exc_info=True)
             raise
