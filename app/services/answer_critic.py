@@ -71,7 +71,7 @@ class AnswerCritic:
         )
 
         try:
-            raw_response = await self._llm.generate(prompt, temperature=0.0)
+            raw_response = await self._llm.generate(prompt, temperature=0.0, json_mode=True)
             logger.debug("Critic raw response: %s", raw_response[:500])
             result = parse_structured_json(raw_response, CriticResult)
             logger.info(

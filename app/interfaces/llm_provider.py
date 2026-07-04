@@ -13,12 +13,14 @@ class LLMProvider(ABC):
     """Abstract base class for language model providers."""
 
     @abstractmethod
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str, temperature: float | None = None, json_mode: bool = False) -> str:
         """
         Generate a text completion for the given prompt.
 
         Args:
             prompt: The full prompt string to send to the LLM.
+            temperature: Optional temperature setting.
+            json_mode: If True, enforce JSON output if supported by the provider.
 
         Returns:
             The generated text response.

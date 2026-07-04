@@ -39,13 +39,14 @@ class GroqProvider(LLMProvider):
             self._model,
         )
 
-    async def generate(self, prompt: str, temperature: float | None = None) -> str:
+    async def generate(self, prompt: str, temperature: float | None = None, json_mode: bool = False) -> str:
         """
         Generate a response from Groq for the given prompt.
 
         Args:
             prompt: The full prompt string.
             temperature: Optional override for temperature.
+            json_mode: If True, enforce JSON output.
 
         Returns:
             The generated text.
@@ -67,17 +68,20 @@ class GroqProvider(LLMProvider):
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             try:
+                # Setup basic kwargs
+                kwargs = {
+                    "messages": [{"role": "user", "content": prompt}],
+                    "model": self._model,
+                    "temperature": temp,
+                }
+                
+                # Add response format if json mode requested
+                if json_mode:
+                    kwargs["response_format"] = {"type": "json_object"}
+                    
                 # Execute completion asynchronously using AsyncGroq client
-                response = await self._client.chat.completions.create(
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        }
-                    ],
-                    model=self._model,
-                    temperature=temp,
-                )
+                response = await self._client.chat.completions.create(**kwargs)
+                
                 text = response.choices[0].message.content.strip()
                 latency_ms = (time.perf_counter() - start_time) * 1000
 

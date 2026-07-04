@@ -67,7 +67,7 @@ class AnswerGenerator:
 
         try:
             # We use temperature=0.0 for structured output extraction to be deterministic
-            raw_response = await self._llm.generate(prompt, temperature=0.0)
+            raw_response = await self._llm.generate(prompt, temperature=0.0, json_mode=True)
             
             result = parse_structured_json(raw_response, GenerationResult)
             

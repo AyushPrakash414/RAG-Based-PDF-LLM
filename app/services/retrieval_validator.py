@@ -79,8 +79,8 @@ class RetrievalValidator:
         )
 
         try:
-            raw_response = await self._llm.generate(prompt, temperature=0.0)
-            logger.debug("Retrieval validator raw response: %s", raw_response[:500])
+            raw_response = await self._llm.generate(prompt, temperature=0.0, json_mode=True)
+            logger.debug("Validator raw response: %s", raw_response[:500])
             result = parse_structured_json(raw_response, RetrievalValidatorResult)
             logger.info(
                 "Retrieval validation: relevant=%s, confidence=%.2f, reason='%s'",
