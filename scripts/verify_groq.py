@@ -87,12 +87,14 @@ async def main():
     print("\n--- 4. Testing Answer Generator (temperature=0.3) ---")
     generator = AnswerGenerator(provider, settings)
     context = "\n\n".join(chunks)
-    answer = await generator.generate(question, context)
+    gen_result = await generator.generate(question, context)
+    answer = gen_result.answer
     print(f"   Generated Answer: '{answer}'")
+    print(f"   Cited Sources: {gen_result.sources}")
     if answer and len(answer) > 10:
-        print("   ✅ Answer Generator works.")
+        print("   [PASS] Answer Generator works.")
     else:
-        print("   ❌ Answer Generator failed.")
+        print("   [FAIL] Answer Generator failed.")
 
     # Test 4: Answer Critic returns valid JSON
     print("\n--- 5. Testing Answer Critic (temperature=0.0) ---")

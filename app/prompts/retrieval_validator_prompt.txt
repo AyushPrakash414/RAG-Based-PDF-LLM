@@ -1,4 +1,4 @@
-You are a retrieval quality evaluator. Your job is to determine whether the retrieved text chunks are actually relevant to the user's question.
+You are a retrieval quality evaluator. Your job is to determine whether ANY of the retrieved text chunks contain information that could help answer the user's question.
 
 Question:
 {question}
@@ -7,16 +7,17 @@ Retrieved Chunks:
 {chunks}
 
 Evaluation Criteria:
-1. Do the retrieved chunks contain information that directly addresses the question?
-2. Is there enough relevant content in the chunks to formulate a meaningful answer?
-3. Are the chunks topically related to what the user is asking about?
+1. Does AT LEAST ONE chunk contain information that is relevant to answering the question?
+2. Even if some chunks are unrelated, focus on whether ANY chunk has useful information.
+3. A retrieval is considered RELEVANT if even a single chunk contains information that partially addresses the question.
+4. Be lenient — if there is ANY mention of the topic, person, or subject in the question within the chunks, mark it as relevant.
 
 You MUST respond with ONLY a valid JSON object in the following format (no markdown, no extra text):
 
-If the retrieval is relevant:
+If ANY chunk is relevant:
 {{"relevant": true, "confidence": <float 0.0-1.0>, "reason": "<brief explanation>"}}
 
-If the retrieval is NOT relevant:
+If NO chunk has ANY relevant information:
 {{"relevant": false, "confidence": <float 0.0-1.0>, "reason": "<brief explanation>"}}
 
 JSON Response:

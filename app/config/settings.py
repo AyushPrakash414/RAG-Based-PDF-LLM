@@ -63,7 +63,7 @@ class Settings(BaseSettings):
         description="Default number of chunks to retrieve.",
     )
     similarity_threshold: float = Field(
-        default=0.3,
+        default=0.15,
         ge=0.0,
         le=1.0,
         description="Default minimum similarity score for retrieval.",
