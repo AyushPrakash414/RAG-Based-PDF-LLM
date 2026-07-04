@@ -16,6 +16,11 @@
   --shadow: 4px 4px 0px var(--border-color);
   --shadow-hover: 2px 2px 0px var(--border-color);
   --radius: 12px;
+
+  /* Skeleton Loading */
+  --skeleton-base: #C8DAEF;
+  --skeleton-shimmer: #E3EDF8;
+  --skeleton-border: #111111;
 }
 
 [data-theme='dark'] {
@@ -23,9 +28,13 @@
   --card-bg: #27272A;
   --text-color: #FFFFFF;
   --border-color: #FFFFFF;
-  /* Primary, success, warning, error remain the same or adapt if needed */
   --shadow: 4px 4px 0px var(--border-color);
   --shadow-hover: 2px 2px 0px var(--border-color);
+
+  /* Skeleton Loading (Dark) */
+  --skeleton-base: #2D2D33;
+  --skeleton-shimmer: #3A3A42;
+  --skeleton-border: #FFFFFF;
 }
 
 * {

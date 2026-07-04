@@ -6,6 +6,9 @@ import { NeoInput } from '../components/shared/NeoInput';
 import { NeoDocumentCard } from '../components/shared/NeoDocumentCard';
 import api from '../api/axios';
 import styles from './Documents.module.css';
+import { NeoSkeleton, SkeletonCol } from '../components/loading/NeoSkeleton';
+import { DocumentCardSkeleton } from '../components/loading/DocumentCardSkeleton';
+import { UploadSkeleton } from '../components/loading/UploadSkeleton';
 
 interface Document {
   id: string;
@@ -19,6 +22,7 @@ export const Documents: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingDocs, setLoadingDocs] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocuments = async () => {
@@ -27,6 +31,8 @@ export const Documents: React.FC = () => {
       setDocuments(data);
     } catch (err) {
       console.error('Failed to fetch documents', err);
+    } finally {
+      setLoadingDocs(false);
     }
   };
 
@@ -83,6 +89,55 @@ export const Documents: React.FC = () => {
     }
   };
 
+  if (loadingDocs) {
+    return (
+      <div className={styles.docsContainer}>
+        <div className={styles.header}>
+          <div>
+            <NeoSkeleton variant="title" width="30%" height={32} style={{ marginBottom: '0.5rem' }} />
+            <NeoSkeleton variant="text" width="50%" height={16} />
+          </div>
+          <div className={styles.headerActions}>
+            <div className={styles.searchBox}>
+              <NeoSkeleton variant="input" width="100%" height={40} />
+            </div>
+            <NeoSkeleton variant="button" width={120} height={40} />
+          </div>
+        </div>
+        
+        {/* Upload Zone skeleton */}
+        <div
+          style={{
+            backgroundColor: 'var(--card-bg)',
+            border: 'var(--border-width) solid var(--border-color)',
+            borderRadius: 'var(--radius)',
+            boxShadow: 'var(--shadow)',
+            height: '180px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '2rem',
+          }}
+        >
+          <SkeletonCol style={{ alignItems: 'center' }}>
+            <NeoSkeleton variant="circle" width={48} height={48} />
+            <NeoSkeleton variant="title" width="20%" height={20} />
+            <NeoSkeleton variant="text" width="15%" height={12} />
+          </SkeletonCol>
+        </div>
+
+        <div className={styles.documentList}>
+          <NeoSkeleton variant="title" width="25%" height={28} style={{ marginBottom: '1.5rem' }} />
+          <div className={styles.grid}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <DocumentCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const filteredDocs = documents.filter(doc => 
     doc.fileName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -123,27 +178,33 @@ export const Documents: React.FC = () => {
 
       {error && <div className={styles.errorAlert} style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
-      <NeoCard 
-        className={`${styles.uploadZone} ${isDragging ? styles.dragging : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        style={{ cursor: 'pointer' }}
-      >
-        <div className={styles.uploadContent}>
-          <div className={styles.uploadIconWrapper}>
-            <Upload size={48} />
-          </div>
-          <h3>{uploading ? 'Uploading...' : 'Drop Files Here'}</h3>
-          <p>or click to browse from your computer</p>
-          <div className={styles.supportedFormats}>
-            <span className={styles.formatBadge}>PDF</span>
-            <span className={styles.formatBadge}>DOCX</span>
-            <span className={styles.formatBadge}>TXT</span>
-          </div>
+      {uploading ? (
+        <div style={{ marginBottom: '2rem' }}>
+          <UploadSkeleton />
         </div>
-      </NeoCard>
+      ) : (
+        <NeoCard 
+          className={`${styles.uploadZone} ${isDragging ? styles.dragging : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.uploadContent}>
+            <div className={styles.uploadIconWrapper}>
+              <Upload size={48} />
+            </div>
+            <h3>Drop Files Here</h3>
+            <p>or click to browse from your computer</p>
+            <div className={styles.supportedFormats}>
+              <span className={styles.formatBadge}>PDF</span>
+              <span className={styles.formatBadge}>DOCX</span>
+              <span className={styles.formatBadge}>TXT</span>
+            </div>
+          </div>
+        </NeoCard>
+      )}
 
       <div className={styles.documentList}>
         <h2>Your Documents ({filteredDocs.length})</h2>

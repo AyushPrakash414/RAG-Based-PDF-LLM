@@ -6,6 +6,11 @@ import { NeoChatBubble } from '../components/shared/NeoChatBubble';
 import api from '../api/axios';
 import styles from './Chat.module.css';
 
+import { ChatSidebarSkeleton } from '../components/loading/ChatSidebarSkeleton';
+import { ChatMessageSkeleton } from '../components/loading/ChatMessageSkeleton';
+import { SourcesPanelSkeleton } from '../components/loading/SourcesPanelSkeleton';
+import { AIThinkingTimeline } from '../components/loading/AIThinkingTimeline';
+
 interface Session {
   id: string;
   title: string;
@@ -32,6 +37,8 @@ export const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch all sessions on mount
@@ -62,15 +69,20 @@ export const Chat: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to fetch sessions', err);
+    } finally {
+      setLoadingSessions(false);
     }
   };
 
   const fetchHistory = async (sessionId: string) => {
+    setLoadingHistory(true);
     try {
       const { data } = await api.get(`/chat/history/${sessionId}`);
       setMessages(data);
     } catch (err) {
       console.error('Failed to fetch history', err);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -155,31 +167,37 @@ export const Chat: React.FC = () => {
       
       {/* Left Sidebar - Chat Sessions */}
       <div className={styles.leftPanel}>
-        <NeoButton fullWidth icon={<Plus size={18} />} className={styles.newChatBtn} onClick={handleNewChat}>
-          New Chat
-        </NeoButton>
-        <div className={styles.sessionList}>
-          {sessions.map((session) => (
-            <div 
-              key={session.id} 
-              className={`${styles.sessionItem} ${activeSession === session.id ? styles.activeSession : ''}`}
-              onClick={() => setActiveSession(session.id)}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, overflow: 'hidden' }}>
-                <MessageSquareIcon />
-                <span className={styles.sessionTitle}>{session.title}</span>
-              </div>
-              <button 
-                className={styles.deleteSessionBtn} 
-                onClick={(e) => handleDeleteSession(session.id, e)}
-                title="Delete Conversation"
-              >
-                <Trash2 size={16} />
-              </button>
+        {loadingSessions ? (
+          <ChatSidebarSkeleton />
+        ) : (
+          <>
+            <NeoButton fullWidth icon={<Plus size={18} />} className={styles.newChatBtn} onClick={handleNewChat}>
+              New Chat
+            </NeoButton>
+            <div className={styles.sessionList}>
+              {sessions.map((session) => (
+                <div 
+                  key={session.id} 
+                  className={`${styles.sessionItem} ${activeSession === session.id ? styles.activeSession : ''}`}
+                  onClick={() => setActiveSession(session.id)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, overflow: 'hidden' }}>
+                    <MessageSquareIcon />
+                    <span className={styles.sessionTitle}>{session.title}</span>
+                  </div>
+                  <button 
+                    className={styles.deleteSessionBtn} 
+                    onClick={(e) => handleDeleteSession(session.id, e)}
+                    title="Delete Conversation"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+              {sessions.length === 0 && <p style={{ padding: '1rem', color: '#666', fontSize: '0.9rem' }}>No conversations yet.</p>}
             </div>
-          ))}
-          {sessions.length === 0 && <p style={{ padding: '1rem', color: '#666', fontSize: '0.9rem' }}>No conversations yet.</p>}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Center - Chat Area */}
@@ -203,60 +221,69 @@ export const Chat: React.FC = () => {
 
         <div className={styles.messagesArea}>
           
-          {sessions.length === 0 && (
+          {sessions.length === 0 && !loadingSessions && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1rem', color: '#666' }}>
               <MessageSquareIcon />
               <p>Welcome! Start a new conversation to ask questions about your documents.</p>
               <NeoButton onClick={handleNewChat} icon={<Plus size={18} />}>Start New Chat</NeoButton>
             </div>
           )}
-          
-          {messages.map((msg, index) => {
-            const isAi = msg.role.toLowerCase() === 'assistant' || msg.role.toLowerCase() === 'ai';
-            const isApproved = msg.status === 'APPROVED';
-            return (
-            <React.Fragment key={msg.id}>
-              {/* Show Status Card only for the latest AI message */}
-              {isAi && index === messages.length - 1 && (
-                <NeoCard className={styles.statusCard}>
-                  <h4>Self-Healing Status</h4>
-                  <div className={styles.statusGrid}>
-                    <div className={styles.statusItem}>
-                      <Search size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
-                      <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>
-                        {isApproved ? 'Retrieval Valid' : 'Retrieval Exhausted / Failed'}
-                      </span>
-                    </div>
-                    <div className={styles.statusItem}>
-                      <Shield size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
-                      <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>
-                        {isApproved ? 'Critic Approved' : 'Critic Rejected'}
-                      </span>
-                    </div>
-                    {msg.confidence !== undefined && (
+
+          {loadingHistory ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <ChatMessageSkeleton role="user" />
+              <ChatMessageSkeleton role="assistant" />
+              <ChatMessageSkeleton role="user" />
+              <ChatMessageSkeleton role="assistant" />
+            </div>
+          ) : (
+            messages.map((msg, index) => {
+              const isAi = msg.role.toLowerCase() === 'assistant' || msg.role.toLowerCase() === 'ai';
+              const isApproved = msg.status === 'APPROVED';
+              return (
+              <React.Fragment key={msg.id}>
+                {/* Show Status Card only for the latest AI message */}
+                {isAi && index === messages.length - 1 && (
+                  <NeoCard className={styles.statusCard}>
+                    <h4>Self-Healing Status</h4>
+                    <div className={styles.statusGrid}>
                       <div className={styles.statusItem}>
-                        <BotIcon size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
-                        <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>Confidence {Math.round(msg.confidence * 100)}%</span>
+                        <Search size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
+                        <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>
+                          {isApproved ? 'Retrieval Valid' : 'Retrieval Exhausted / Failed'}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                </NeoCard>
-              )}
-              
-              <NeoChatBubble
-                role={msg.role.toLowerCase() === 'user' ? 'user' : 'assistant'}
-                content={msg.content}
-                confidence={msg.confidence}
-                sources={msg.sources}
-                timestamp={msg.timestamp || ''}
-              />
-            </React.Fragment>
-            );
-          })}
+                      <div className={styles.statusItem}>
+                        <Shield size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
+                        <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>
+                          {isApproved ? 'Critic Approved' : 'Critic Rejected'}
+                        </span>
+                      </div>
+                      {msg.confidence !== undefined && (
+                        <div className={styles.statusItem}>
+                          <BotIcon size={16} className={isApproved ? styles.statusIconSuccess : styles.statusIconError} />
+                          <span style={{ color: isApproved ? 'inherit' : 'var(--error)' }}>Confidence {Math.round(msg.confidence * 100)}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </NeoCard>
+                )}
+                
+                <NeoChatBubble
+                  role={msg.role.toLowerCase() === 'user' ? 'user' : 'assistant'}
+                  content={msg.content}
+                  confidence={msg.confidence}
+                  sources={msg.sources}
+                  timestamp={msg.timestamp || ''}
+                />
+              </React.Fragment>
+              );
+            })
+          )}
           
           {loading && (
-            <div style={{ padding: '1rem', fontStyle: 'italic', color: '#666' }}>
-              AI is thinking...
+            <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '1rem 0' }}>
+              <AIThinkingTimeline />
             </div>
           )}
           
@@ -289,7 +316,9 @@ export const Chat: React.FC = () => {
         <h3>Sources Panel</h3>
         <p className={styles.sourcesDesc}>Documents referenced in the current answer.</p>
         
-        {latestAiMessage?.sources && latestAiMessage.sources.length > 0 ? (
+        {loading ? (
+          <SourcesPanelSkeleton />
+        ) : latestAiMessage?.sources && latestAiMessage.sources.length > 0 ? (
           <NeoCard className={styles.sourceCard}>
             <div className={styles.sourceHeader}>
               <FileText size={18} />

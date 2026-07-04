@@ -11,15 +11,18 @@ import { Documents } from './pages/Documents';
 import { Chat } from './pages/Chat';
 import { Settings } from './pages/Settings';
 
+import { PageSkeleton } from './components/loading/PageSkeleton';
+import { DashboardSkeleton } from './components/loading/DashboardSkeleton';
+
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <DashboardSkeleton />;
   return user ? <>{children}</> : <Navigate to="/login" />;
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <PageSkeleton />;
   return !user ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 

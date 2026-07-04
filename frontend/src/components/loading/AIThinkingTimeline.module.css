@@ -1,0 +1,157 @@
+.timeline {
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  max-width: 420px;
+}
+
+.timelineHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-color);
+}
+
+.headerDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  animation: headerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes headerPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 20px;
+}
+
+/* Vertical connector line */
+.steps::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  background: var(--skeleton-base);
+  border-radius: 2px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  position: relative;
+  opacity: 0;
+  transform: translateX(-8px);
+  animation: stepAppear 0.4s ease forwards;
+}
+
+@keyframes stepAppear {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.stepIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--skeleton-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--card-bg);
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.stepLabel {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+/* States */
+.stepCompleted .stepIcon {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.stepCompleted .stepLabel {
+  opacity: 0.7;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.stepActive .stepIcon {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  animation: activePulse 1.5s ease-in-out infinite;
+}
+
+.stepActive .stepLabel {
+  opacity: 1;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+@keyframes activePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91, 141, 239, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(91, 141, 239, 0); }
+}
+
+.stepPending .stepIcon {
+  background: var(--skeleton-base);
+  border-color: var(--skeleton-border);
+  opacity: 0.3;
+}
+
+.stepPending .stepLabel {
+  opacity: 0.3;
+}
+
+/* Connector fill */
+.connectorFill {
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  width: 3px;
+  background: var(--success);
+  border-radius: 2px;
+  z-index: 0;
+  transition: height 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+  .headerDot,
+  .stepActive .stepIcon {
+    animation: none;
+  }
+}

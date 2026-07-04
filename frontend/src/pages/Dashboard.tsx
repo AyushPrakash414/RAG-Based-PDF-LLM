@@ -5,10 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import styles from './Dashboard.module.css';
 
+import { DashboardSkeleton } from '../components/loading/DashboardSkeleton';
+
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [docCount, setDocCount] = useState(0);
   const [chatCount, setChatCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -21,10 +24,16 @@ export const Dashboard: React.FC = () => {
         setChatCount(chatsRes.data.length || 0);
       } catch (error) {
         console.error('Failed to fetch dashboard stats', error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchStats();
   }, []);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className={styles.dashboardContainer}>
